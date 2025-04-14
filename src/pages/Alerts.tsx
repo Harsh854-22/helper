@@ -235,7 +235,7 @@ const Alerts = () => {
       title: newAlert.title || '',
       location: newAlert.location || '',
       time: 'Just now',
-      severity: newAlert.severity as 'critical' | 'high' | 'medium' | 'low' || 'medium',
+      severity: (newAlert.severity as 'critical' | 'high' | 'medium' | 'low') || 'medium',
       description: newAlert.description || '',
       instructions: newAlert.instructions?.filter(i => i.trim() !== '') || ['Stay safe'],
     };

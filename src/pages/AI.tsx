@@ -63,9 +63,9 @@ const AI = () => {
     setIsLoading(true);
     
     try {
-      // Use Gemini API for responses
-      const API_KEY = "AIzaSyDuUvqAeeIyRVDyOP436M7MBu3J374cfMI";
-      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
+      // Use updated Gemini API key
+      const API_KEY = "AIzaSyCJukLSBBrMpeSbj_496r-C-8JyvZVVEI4";
+      const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
       
       const recentMessages = messages.slice(-5); // Get last 5 messages for context
       
