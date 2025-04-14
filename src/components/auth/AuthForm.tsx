@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,12 +11,13 @@ import { Loader2 } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup' | 'reset';
 
-export const AuthForm = () => {
+export function AuthForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<AuthMode>('signin');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,37 +31,45 @@ export const AuthForm = () => {
         });
 
         if (error) throw error;
+        
         toast({
-          title: "Successfully signed in",
-          description: "Welcome back!",
+          title: "Sign in successful",
+          description: "Welcome back!"
         });
-
+        
+        navigate('/dashboard');
       } else if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin + '/dashboard',
+          },
         });
 
         if (error) throw error;
-        toast({
-          title: "Successfully signed up",
-          description: "Please check your email for the confirmation link.",
-        });
-
-      } else if (mode === 'reset') {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
         
+        toast({
+          title: "Sign up successful",
+          description: "Please check your email for verification."
+        });
+      } else if (mode === 'reset') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/reset-password',
+        });
+
         if (error) throw error;
+        
         toast({
           title: "Password reset email sent",
-          description: "Please check your email for the reset link.",
+          description: "Check your email for a password reset link."
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Authentication error",
-        description: error instanceof Error ? error.message : 'An error occurred',
+        title: "Error",
+        description: error.message || "Something went wrong."
       });
     } finally {
       setLoading(false);
@@ -67,29 +77,27 @@ export const AuthForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-helper-darkgray border-helper-darkgray">
+    <Card className="w-full max-w-md bg-helper-darkgray border-helper-darkgray">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-2xl">
           {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
         </CardTitle>
         <CardDescription>
-          {mode === 'signin' 
-            ? 'Enter your credentials to access your account' 
-            : mode === 'signup' 
-              ? 'Create a new account to save your data' 
-              : 'Enter your email to receive a reset link'}
+          {mode === 'signin' ? 'Enter your credentials to access your account' : 
+           mode === 'signup' ? 'Create a new account to get started' : 
+           'Enter your email to receive a password reset link'}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleAuth} className="space-y-4">
+      <form onSubmit={handleAuth}>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input 
+            <Input
               id="email"
               type="email"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your.email@example.com"
               required
               className="bg-helper-black border-helper-darkgray"
             />
@@ -98,70 +106,55 @@ export const AuthForm = () => {
           {mode !== 'reset' && (
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input 
+              <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required={mode !== 'reset'}
+                required
                 className="bg-helper-black border-helper-darkgray"
               />
             </div>
           )}
-          
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
           <Button 
             type="submit" 
-            className="w-full bg-helper-red hover:bg-red-700 text-white"
+            className="w-full bg-helper-red hover:bg-red-700"
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link'}
+            {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}
           </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-2">
-        {mode === 'signin' ? (
-          <>
-            <Button 
-              variant="link" 
-              className="text-helper-red" 
-              onClick={() => setMode('reset')}
-            >
-              Forgot your password?
-            </Button>
-            <div className="text-sm">
-              Don't have an account?{' '}
-              <Button 
-                variant="link" 
-                className="text-helper-red p-0 h-auto" 
-                onClick={() => setMode('signup')}
-              >
-                Sign up
+          
+          <div className="text-center text-sm">
+            {mode === 'signin' ? (
+              <>
+                Don't have an account?{' '}
+                <Button variant="link" className="p-0 text-helper-red" onClick={() => setMode('signup')}>
+                  Sign up
+                </Button>
+                <br />
+                <Button variant="link" className="p-0 text-helper-red" onClick={() => setMode('reset')}>
+                  Forgot password?
+                </Button>
+              </>
+            ) : mode === 'signup' ? (
+              <>
+                Already have an account?{' '}
+                <Button variant="link" className="p-0 text-helper-red" onClick={() => setMode('signin')}>
+                  Sign in
+                </Button>
+              </>
+            ) : (
+              <Button variant="link" className="p-0 text-helper-red" onClick={() => setMode('signin')}>
+                Back to sign in
               </Button>
-            </div>
-          </>
-        ) : mode === 'signup' ? (
-          <div className="text-sm">
-            Already have an account?{' '}
-            <Button 
-              variant="link" 
-              className="text-helper-red p-0 h-auto" 
-              onClick={() => setMode('signin')}
-            >
-              Sign in
-            </Button>
+            )}
           </div>
-        ) : (
-          <Button 
-            variant="link" 
-            className="text-helper-red" 
-            onClick={() => setMode('signin')}
-          >
-            Back to sign in
-          </Button>
-        )}
-      </CardFooter>
+        </CardFooter>
+      </form>
     </Card>
   );
-};
+}

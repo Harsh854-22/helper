@@ -20,79 +20,256 @@ import {
   Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { WeatherData } from '@/types';
 
-interface WeatherData {
-  location: string;
-  temperature: number;
-  humidity: number;
-  windSpeed: number;
-  windDirection: string;
-  description: string;
-  condition: 'clear' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog';
-  forecast: {
-    day: string;
-    temperature: number;
-    condition: 'clear' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog';
-  }[];
-  alerts: {
-    type: string;
-    description: string;
-    severity: 'low' | 'medium' | 'high';
-  }[];
-  lastUpdated: string;
-}
-
-// Sample weather data
-const sampleWeatherData: WeatherData = {
-  location: "Current Location",
-  temperature: 68,
-  humidity: 75,
-  windSpeed: 12,
-  windDirection: "NE",
-  description: "Partly Cloudy",
-  condition: "cloudy",
-  forecast: [
-    { day: "Today", temperature: 68, condition: "cloudy" },
-    { day: "Tomorrow", temperature: 72, condition: "clear" },
-    { day: "Wed", temperature: 65, condition: "rain" },
-    { day: "Thu", temperature: 63, condition: "rain" },
-    { day: "Fri", temperature: 70, condition: "cloudy" }
-  ],
-  alerts: [
-    {
-      type: "Flood Watch",
-      description: "Potential flooding in low-lying areas due to recent rainfall.",
-      severity: "medium"
-    }
-  ],
-  lastUpdated: "10:30 AM"
-};
+// OpenWeatherMap API key
+const OPENWEATHER_API_KEY = "ADD_YOUR_KEY_HERE"; // Replace with your API key
 
 const Weather = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [location, setLocation] = useState<{lat: number, lon: number} | null>(null);
   const { toast } = useToast();
 
+  // Get user's location
   useEffect(() => {
-    // Simulate fetching weather data
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast({
+            variant: "destructive",
+            title: "Location error",
+            description: "Could not get your location. Using default location."
+          });
+          // Use a default location
+          setLocation({ lat: 40.7128, lon: -74.0060 }); // New York City
+        }
+      );
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation. Using default location."
+      });
+      setLocation({ lat: 40.7128, lon: -74.0060 }); // New York City
+    }
+  }, [toast]);
+
+  // Fetch weather data when location is available
+  useEffect(() => {
+    if (!location) return;
+    
     const fetchWeather = async () => {
       try {
-        setTimeout(() => {
-          setWeatherData(sampleWeatherData);
-          setIsLoading(false);
-        }, 1500);
+        setIsLoading(true);
+        
+        // If using a real API key
+        if (OPENWEATHER_API_KEY !== "ADD_YOUR_KEY_HERE") {
+          const response = await fetch(
+            `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`
+          );
+          
+          if (!response.ok) {
+            throw new Error("Weather API request failed");
+          }
+          
+          const data = await response.json();
+          
+          // Transform API data to our format
+          const transformedData: WeatherData = {
+            location: "Current Location",
+            temperature: Math.round(data.current.temp),
+            humidity: data.current.humidity,
+            windSpeed: Math.round(data.current.wind_speed),
+            windDirection: getWindDirection(data.current.wind_deg),
+            description: data.current.weather[0].description,
+            condition: mapWeatherCondition(data.current.weather[0].main),
+            forecast: data.daily.slice(0, 5).map((day: any, index: number) => ({
+              day: index === 0 ? "Today" : index === 1 ? "Tomorrow" : new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
+              temperature: Math.round(day.temp.day),
+              condition: mapWeatherCondition(day.weather[0].main)
+            })),
+            alerts: data.alerts ? data.alerts.map((alert: any) => ({
+              type: alert.event,
+              description: alert.description,
+              severity: getSeverityFromEvent(alert.event)
+            })) : [],
+            lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          
+          setWeatherData(transformedData);
+        } else {
+          // Use sample data if no API key is provided
+          const sampleData = getSampleWeatherData();
+          setTimeout(() => {
+            setWeatherData(sampleData);
+          }, 1000);
+        }
       } catch (error) {
+        console.error("Error fetching weather:", error);
         toast({
           variant: "destructive",
           title: "Error fetching weather data",
-          description: "Please try again later."
+          description: "Using sample data instead."
         });
+        // Fallback to sample data
+        setWeatherData(getSampleWeatherData());
+      } finally {
         setIsLoading(false);
       }
     };
 
     fetchWeather();
-  }, [toast]);
+  }, [location, toast]);
+
+  const refreshWeather = () => {
+    if (location) {
+      setIsLoading(true);
+      // Refetch weather data
+      const fetchData = async () => {
+        try {
+          if (OPENWEATHER_API_KEY !== "ADD_YOUR_KEY_HERE") {
+            const response = await fetch(
+              `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`
+            );
+            
+            if (!response.ok) {
+              throw new Error("Weather API request failed");
+            }
+            
+            const data = await response.json();
+            
+            // Transform API data to our format (same logic as above)
+            const transformedData: WeatherData = {
+              location: "Current Location",
+              temperature: Math.round(data.current.temp),
+              humidity: data.current.humidity,
+              windSpeed: Math.round(data.current.wind_speed),
+              windDirection: getWindDirection(data.current.wind_deg),
+              description: data.current.weather[0].description,
+              condition: mapWeatherCondition(data.current.weather[0].main),
+              forecast: data.daily.slice(0, 5).map((day: any, index: number) => ({
+                day: index === 0 ? "Today" : index === 1 ? "Tomorrow" : new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
+                temperature: Math.round(day.temp.day),
+                condition: mapWeatherCondition(day.weather[0].main)
+              })),
+              alerts: data.alerts ? data.alerts.map((alert: any) => ({
+                type: alert.event,
+                description: alert.description,
+                severity: getSeverityFromEvent(alert.event)
+              })) : [],
+              lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            
+            setWeatherData(transformedData);
+          } else {
+            // Use sample data if no API key is provided
+            const sampleData = getSampleWeatherData();
+            setTimeout(() => {
+              setWeatherData({
+                ...sampleData,
+                lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              });
+            }, 1000);
+          }
+        } catch (error) {
+          console.error("Error refreshing weather:", error);
+          toast({
+            variant: "destructive",
+            title: "Error refreshing weather data",
+            description: "Using sample data instead."
+          });
+          setWeatherData(getSampleWeatherData());
+        } finally {
+          setIsLoading(false);
+          toast({
+            title: "Weather updated",
+            description: "Weather information has been refreshed."
+          });
+        }
+      };
+      
+      fetchData();
+    }
+  };
+
+  const getSampleWeatherData = (): WeatherData => ({
+    location: "Current Location",
+    temperature: 68,
+    humidity: 75,
+    windSpeed: 12,
+    windDirection: "NE",
+    description: "Partly Cloudy",
+    condition: "cloudy",
+    forecast: [
+      { day: "Today", temperature: 68, condition: "cloudy" },
+      { day: "Tomorrow", temperature: 72, condition: "clear" },
+      { day: "Wed", temperature: 65, condition: "rain" },
+      { day: "Thu", temperature: 63, condition: "rain" },
+      { day: "Fri", temperature: 70, condition: "cloudy" }
+    ],
+    alerts: [
+      {
+        type: "Flood Watch",
+        description: "Potential flooding in low-lying areas due to recent rainfall.",
+        severity: "medium"
+      }
+    ],
+    lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  });
+
+  // Helper functions
+  const getWindDirection = (degrees: number) => {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const index = Math.round(degrees / 45) % 8;
+    return directions[index];
+  };
+
+  const mapWeatherCondition = (condition: string): 'clear' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog' => {
+    const conditionMap: {[key: string]: 'clear' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog'} = {
+      'Clear': 'clear',
+      'Clouds': 'cloudy',
+      'Rain': 'rain',
+      'Drizzle': 'rain',
+      'Thunderstorm': 'storm',
+      'Snow': 'snow',
+      'Mist': 'fog',
+      'Smoke': 'fog',
+      'Haze': 'fog',
+      'Dust': 'fog',
+      'Fog': 'fog',
+      'Sand': 'fog',
+      'Ash': 'fog',
+      'Squall': 'storm',
+      'Tornado': 'storm'
+    };
+    
+    return conditionMap[condition] || 'cloudy';
+  };
+
+  const getSeverityFromEvent = (event: string): 'low' | 'medium' | 'high' => {
+    const highSeverityEvents = ['Hurricane', 'Tornado', 'Tsunami', 'Flash Flood', 'Severe Thunderstorm'];
+    const mediumSeverityEvents = ['Flood', 'Winter Storm', 'Heat Advisory', 'Wind Advisory', 'Dense Fog'];
+    
+    const eventLower = event.toLowerCase();
+    
+    for (const highEvent of highSeverityEvents) {
+      if (eventLower.includes(highEvent.toLowerCase())) return 'high';
+    }
+    
+    for (const medEvent of mediumSeverityEvents) {
+      if (eventLower.includes(medEvent.toLowerCase())) return 'medium';
+    }
+    
+    return 'low';
+  };
 
   const renderWeatherIcon = (condition: string, size = 24) => {
     switch (condition) {
@@ -120,19 +297,6 @@ const Weather = () => {
       case 'low': return 'bg-yellow-500';
       default: return 'bg-gray-500';
     }
-  };
-
-  const refreshWeather = () => {
-    setIsLoading(true);
-    // Simulate refreshing weather data
-    setTimeout(() => {
-      setWeatherData(sampleWeatherData);
-      setIsLoading(false);
-      toast({
-        title: "Weather updated",
-        description: "Weather information has been refreshed."
-      });
-    }, 1500);
   };
 
   if (isLoading) {

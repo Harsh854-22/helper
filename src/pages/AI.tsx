@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -189,7 +190,10 @@ const AI = () => {
                         <Bot className="h-4 w-4" />
                       )}
                       <span className="text-xs opacity-70">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {message.timestamp instanceof Date 
+                          ? message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }
                       </span>
                     </div>
                     <p className="whitespace-pre-wrap text-sm">{message.content}</p>
