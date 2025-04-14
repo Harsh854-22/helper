@@ -52,7 +52,7 @@ export function AppSidebar() {
         'transition-width duration-300 border-r border-helper-darkgray', 
         isCollapsed ? 'lg:w-[70px]' : 'lg:w-[240px]'
       )}
-      collapsed={isCollapsed}
+      data-state={isCollapsed ? "collapsed" : "expanded"}
     >
       <SidebarHeader className="flex items-center justify-between p-4 h-16">
         {!isCollapsed && (

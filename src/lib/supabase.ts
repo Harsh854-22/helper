@@ -1,9 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Public Supabase keys can be safely stored in client-side code
-// Private keys should be stored in environment variables or Supabase Edge Functions
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-anon-key';
+// Use our Supabase project details
+const supabaseUrl = 'https://pxmtihysjjjlbrdxcbyj.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4bXRpaHlzampqbGJyZHhjYnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2Mjg3NjIsImV4cCI6MjA2MDIwNDc2Mn0.9iNkaFwl5la-roPBUHT4afZdiaTyt7tcIFt4oIAyljo';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
