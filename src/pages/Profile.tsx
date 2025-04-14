@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,23 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Save, AlertCircle, FileText } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-
-interface MedicalInfo {
-  conditions: string;
-  medications: string;
-  allergies: string;
-  bloodType: string;
-  notes: string;
-}
-
-interface ProfileInfo {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  emergencyContact: string;
-  medicalInfo: MedicalInfo;
-}
+import { ProfileInfo, MedicalInfo } from '@/types';
 
 const defaultProfile: ProfileInfo = {
   name: '',
@@ -77,13 +60,15 @@ const Profile = () => {
     
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setProfile(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof ProfileInfo],
-          [child]: value
-        }
-      }));
+      if (parent === 'medicalInfo') {
+        setProfile(prev => ({
+          ...prev,
+          medicalInfo: {
+            ...prev.medicalInfo,
+            [child]: value
+          }
+        }));
+      }
     } else {
       setProfile(prev => ({
         ...prev,

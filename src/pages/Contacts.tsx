@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,16 +9,9 @@ import { Phone, User, Plus, Search, Trash2, Edit, X, Save, UserCircle } from 'lu
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Contact } from '@/types';
 
-interface Contact {
-  id: string;
-  name: string;
-  phone: string;
-  type: 'emergency' | 'family' | 'friend' | 'medical' | 'other';
-  notes?: string;
-}
-
-const emergencyServices = [
+const emergencyServices: Contact[] = [
   { id: 'emergency-1', name: 'Emergency Services', phone: '911', type: 'emergency', notes: 'For immediate life-threatening emergencies' },
   { id: 'emergency-2', name: 'Police Department', phone: '(555) 123-4567', type: 'emergency', notes: 'For non-emergency police assistance' },
   { id: 'emergency-3', name: 'Fire Department', phone: '(555) 234-5678', type: 'emergency', notes: 'For non-emergency fire assistance' },

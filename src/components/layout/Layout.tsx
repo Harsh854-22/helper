@@ -3,7 +3,8 @@ import { ReactNode } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
+import { Home, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,7 +14,13 @@ interface LayoutProps {
 export const Layout = ({ children, title }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const isHomePage = location.pathname === '/';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -32,6 +39,18 @@ export const Layout = ({ children, title }: LayoutProps) => {
                   className="h-8 w-8"
                 >
                   <Home className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {user && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="h-8 gap-1 text-red-500 hover:text-red-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
                 </Button>
               )}
             </div>
