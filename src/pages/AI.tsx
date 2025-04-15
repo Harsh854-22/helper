@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,14 +17,20 @@ const AI = () => {
   const { toast } = useToast();
   const generatorRef = useRef<any>(null);
 
-  // Initialize the model
+  // Initialize the model with a lighter version
   useEffect(() => {
     const initModel = async () => {
       try {
         generatorRef.current = await pipeline(
           'text2text-generation',
           'google/flan-t5-small',
-          { quantized: true }
+          { 
+            revision: 'main',
+            cache: true,
+            minLength: 10,
+            maxLength: 100,
+            temperature: 0.7
+          }
         );
         setIsModelLoading(false);
       } catch (error) {
