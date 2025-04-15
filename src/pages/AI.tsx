@@ -1,13 +1,12 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Message } from '@/types';
-import { Send, Bot, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
+import { Send, Bot, User as UserIcon, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { env } from '@/utils/ai-config';
+import { generateAIResponse, RESPONSE_DELAY } from '@/utils/ai-config';
 
 const AI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -17,7 +16,6 @@ const AI = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Pre-defined first-time welcome message
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMessage: Message = {
@@ -29,21 +27,18 @@ const AI = () => {
       setMessages([welcomeMessage]);
     }
     
-    // Load messages from localStorage
     const savedMessages = localStorage.getItem('helper-ai-messages');
     if (savedMessages && messages.length <= 1) {
       setMessages(JSON.parse(savedMessages));
     }
   }, []);
   
-  // Save messages to localStorage when they change
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem('helper-ai-messages', JSON.stringify(messages));
     }
   }, [messages]);
   
-  // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -65,23 +60,9 @@ const AI = () => {
     setIsLoading(true);
     
     try {
-      // Get last 5 messages for context
-      const recentMessages = messages.slice(-5);
-      const context = recentMessages
-        .map(msg => `${msg.isUser ? 'User' : 'Assistant'}: ${msg.content}`)
-        .join('\n');
+      await new Promise(resolve => setTimeout(resolve, RESPONSE_DELAY));
       
-      const prompt = `Context: You are a helpful disaster management assistant. Always provide accurate and helpful information about disaster preparedness, response, and recovery.
-
-Previous conversation:
-${context}
-
-User question: ${input}
-
-Provide a clear and helpful response:`;
-
-      // Using a simpler approach for response generation to avoid model loading issues
-      const response = await generateResponse(prompt);
+      const response = generateAIResponse(input);
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -98,52 +79,11 @@ Provide a clear and helpful response:`;
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to get a response. Please try again later.",
+        description: "Failed to get a response. Please try again.",
       });
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "I'm sorry, I couldn't process your request right now. Please try again later.",
-        isUser: false,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Simple response generation function that doesn't rely on heavy models
-  const generateResponse = async (prompt: string): Promise<string> => {
-    // Basic response templates for common disaster-related topics
-    const responses = {
-      earthquake: "During an earthquake, remember to DROP, COVER, and HOLD ON. Get under a sturdy piece of furniture and hold on until the shaking stops. Stay away from windows and exterior walls.",
-      fire: "If there's a fire, remember to GET OUT and STAY OUT. Use your escape plan, stay low to avoid smoke, and call emergency services once you're safely outside.",
-      flood: "For floods, remember to move to higher ground and avoid walking or driving through flood waters. Just 6 inches of moving water can knock you down, and 12 inches can float a vehicle.",
-      hurricane: "When preparing for a hurricane, secure your home, gather emergency supplies, and follow evacuation orders if given. Stay informed through official channels and have a communication plan.",
-      tornado: "During a tornado warning, seek shelter immediately in a basement, storm cellar, or interior room on the lowest floor with no windows. Cover yourself with blankets or a mattress for protection.",
-      preparedness: "A basic emergency kit should include water (one gallon per person per day for at least three days), non-perishable food, flashlight, first aid kit, batteries, whistle, dust mask, plastic sheeting, duct tape, moist towelettes, garbage bags, wrench/pliers, can opener, and local maps.",
-      evacuation: "When evacuating, remember to take your emergency supply kit, secure your home, unplug electrical equipment, leave a note telling others when you left and where you're going, lock your home, and use recommended evacuation routes.",
-      firstaid: "Basic first aid includes treating wounds by cleaning with soap and water, controlling bleeding with pressure, treating burns by cooling with water, and monitoring for signs of shock like rapid breathing, paleness, or weakness.",
-    };
-
-    // Simple keyword matching to determine response
-    const lowerPrompt = prompt.toLowerCase();
-    let response = "I'm here to help with disaster management questions. Could you provide more specific details about what you'd like to know about emergency preparedness, response, or recovery?";
-    
-    // Check for keywords in the prompt
-    for (const [key, value] of Object.entries(responses)) {
-      if (lowerPrompt.includes(key)) {
-        response = value;
-        break;
-      }
-    }
-    
-    // Add a small delay to simulate processing
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return response;
   };
 
   const handleClearChat = () => {
