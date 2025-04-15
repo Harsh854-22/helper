@@ -4,17 +4,42 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Message } from '@/types';
-import { Send, Bot, User as UserIcon, RefreshCw } from 'lucide-react';
+import { Send, Bot, User as UserIcon, RefreshCw, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateAIResponse, RESPONSE_DELAY } from '@/utils/ai-config';
+import { pipeline } from '@huggingface/transformers';
 
 const AI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(true);
+  const [generator, setGenerator] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        const pipe = await pipeline(
+          'text-generation',
+          'gpt2',
+          { quantized: true }
+        );
+        setGenerator(pipe);
+        setIsModelLoading(false);
+      } catch (error) {
+        console.error('Error loading model:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load AI model. Using fallback responses.",
+        });
+        setIsModelLoading(false);
+      }
+    };
+
+    loadModel();
+  }, [toast]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -60,9 +85,18 @@ const AI = () => {
     setIsLoading(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, RESPONSE_DELAY));
+      let response;
       
-      const response = generateAIResponse(input);
+      if (generator) {
+        const result = await generator(input + "\nResponse:", {
+          max_length: 100,
+          temperature: 0.7,
+          top_p: 0.9,
+        });
+        response = result[0].generated_text.split("Response:")[1].trim();
+      } else {
+        response = generateFallbackResponse(input);
+      }
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -84,6 +118,20 @@ const AI = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const generateFallbackResponse = (input: string): string => {
+    const lowercaseInput = input.toLowerCase();
+    
+    if (lowercaseInput.includes('hello') || lowercaseInput.includes('hi')) {
+      return "Hello! I'm your disaster management assistant. How can I help you today?";
+    }
+    
+    if (lowercaseInput.includes('emergency') || lowercaseInput.includes('help')) {
+      return "For immediate emergency assistance, please call your local emergency services. I can provide guidance on disaster preparedness and safety procedures.";
+    }
+    
+    return "I'm here to help with disaster management questions. Could you please be more specific about what you'd like to know?";
   };
 
   const handleClearChat = () => {
