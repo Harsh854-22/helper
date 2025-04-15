@@ -5,16 +5,42 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Message } from '@/types';
-import { Send, Bot, User as UserIcon, Loader2 } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { pipeline } from '@huggingface/transformers';
 
 const AI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  
+  const generatorRef = useRef<any>(null);
+
+  // Initialize the model
+  useEffect(() => {
+    const initModel = async () => {
+      try {
+        generatorRef.current = await pipeline(
+          'text2text-generation',
+          'google/flan-t5-small',
+          { quantized: true }
+        );
+        setIsModelLoading(false);
+      } catch (error) {
+        console.error('Error loading model:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load AI model. Please refresh the page.",
+        });
+      }
+    };
+    
+    initModel();
+  }, [toast]);
+
   // Pre-defined first-time welcome message
   useEffect(() => {
     if (messages.length === 0) {
@@ -49,7 +75,7 @@ const AI = () => {
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading || isModelLoading) return;
     
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -63,51 +89,27 @@ const AI = () => {
     setIsLoading(true);
     
     try {
-      // Use updated Gemini API key
-      const API_KEY = "AIzaSyCJukLSBBrMpeSbj_496r-C-8JyvZVVEI4";
-      const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
+      // Get last 5 messages for context
+      const recentMessages = messages.slice(-5);
+      const context = recentMessages
+        .map(msg => `${msg.isUser ? 'User' : 'Assistant'}: ${msg.content}`)
+        .join('\n');
       
-      const recentMessages = messages.slice(-5); // Get last 5 messages for context
-      
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `You are a helpful disaster management assistant. Always provide accurate and helpful information about disaster preparedness, response, and recovery. 
-                  
-                  Recent conversation:
-                  ${recentMessages.map(msg => `${msg.isUser ? 'User' : 'Assistant'}: ${msg.content}`).join('\n')}
-                  
-                  User: ${input}
-                  
-                  Respond with clear, concise information. If discussing sensitive disaster topics, be empathetic and focus on practical advice.`
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.95,
-            topK: 40,
-            maxOutputTokens: 1024,
-          }
-        }),
+      const prompt = `Context: You are a helpful disaster management assistant. Always provide accurate and helpful information about disaster preparedness, response, and recovery.
+
+Previous conversation:
+${context}
+
+User question: ${input}
+
+Provide a clear and helpful response:`;
+
+      const result = await generatorRef.current(prompt, {
+        max_length: 512,
+        temperature: 0.7,
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to get response from AI');
-      }
-      
-      const data = await response.json();
-      
-      // Extract the response text
-      const aiResponse = data.candidates[0].content.parts[0].text;
+
+      const aiResponse = result[0].generated_text;
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -119,7 +121,7 @@ const AI = () => {
       setMessages(prev => [...prev, botMessage]);
       
     } catch (error) {
-      console.error('Error fetching AI response:', error);
+      console.error('Error generating response:', error);
       
       toast({
         variant: "destructive",
@@ -127,7 +129,6 @@ const AI = () => {
         description: "Failed to get a response. Please try again later.",
       });
       
-      // Add fallback error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "I'm sorry, I couldn't process your request right now. Please try again later.",
@@ -142,7 +143,6 @@ const AI = () => {
   };
 
   const handleClearChat = () => {
-    // Keep only the welcome message
     const welcomeMessage = messages[0];
     setMessages([welcomeMessage]);
     localStorage.setItem('helper-ai-messages', JSON.stringify([welcomeMessage]));
@@ -157,18 +157,42 @@ const AI = () => {
     <Layout title="AI Assistant">
       <div className="container mx-auto p-4 md:p-6 flex flex-col h-[calc(100vh-4rem)]">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Disaster Management Assistant</h2>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleClearChat}
-            className="text-xs"
-          >
-            Clear Chat
-          </Button>
+          <div className="flex items-center gap-2">
+            <Bot className="h-6 w-6 text-helper-red" />
+            <h2 className="text-xl font-bold">Disaster Management Assistant</h2>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.reload()}
+              className="text-xs flex gap-1"
+              disabled={isLoading}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reload Model
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleClearChat}
+              className="text-xs"
+              disabled={isLoading}
+            >
+              Clear Chat
+            </Button>
+          </div>
         </div>
         
-        <Card className="flex-1 overflow-hidden bg-helper-darkgray border-helper-darkgray mb-4">
+        <Card className="flex-1 overflow-hidden bg-black/20 backdrop-blur-sm border-helper-darkgray mb-4 relative">
+          {isModelLoading && (
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                <p className="text-sm text-gray-400">Loading AI Model...</p>
+              </div>
+            </div>
+          )}
           <CardContent className="p-4 h-full overflow-y-auto">
             <div className="space-y-4">
               {messages.map((message) => (
@@ -177,10 +201,10 @@ const AI = () => {
                   className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   <div 
-                    className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 ${
+                    className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 backdrop-blur-sm ${
                       message.isUser 
-                        ? 'bg-helper-red text-white rounded-tr-none' 
-                        : 'bg-helper-black border border-helper-darkgray rounded-tl-none'
+                        ? 'bg-helper-red/90 text-white rounded-tr-none' 
+                        : 'bg-helper-black/90 border border-helper-darkgray rounded-tl-none'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -196,14 +220,14 @@ const AI = () => {
                         }
                       </span>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
                   </div>
                 </div>
               ))}
               
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-helper-black border border-helper-darkgray rounded-lg rounded-tl-none p-3">
+                  <div className="bg-helper-black/90 border border-helper-darkgray rounded-lg rounded-tl-none p-3 backdrop-blur-sm">
                     <div className="flex items-center gap-2">
                       <Bot className="h-4 w-4" />
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,16 +244,16 @@ const AI = () => {
         
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
-            className="flex-1 bg-helper-darkgray border-helper-darkgray"
-            placeholder="Type your message..."
+            className="flex-1 bg-black/20 backdrop-blur-sm border-helper-darkgray focus:ring-helper-red"
+            placeholder={isModelLoading ? "Loading AI model..." : "Type your message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isModelLoading}
           />
           <Button 
             type="submit" 
             className="bg-helper-red hover:bg-red-700 text-white"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || isModelLoading || !input.trim()}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
