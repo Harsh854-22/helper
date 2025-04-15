@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,7 +27,6 @@ const AI = () => {
           'google/flan-t5-small',
           { 
             revision: 'main',
-            cache: true,
             minLength: 10,
             maxLength: 100,
             temperature: 0.7
