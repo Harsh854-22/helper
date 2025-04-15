@@ -7,44 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Message } from '@/types';
 import { Send, Bot, User as UserIcon, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { pipeline } from '@huggingface/transformers';
+import { env } from '@/utils/ai-config';
 
 const AI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isModelLoading, setIsModelLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const generatorRef = useRef<any>(null);
-
-  // Initialize the model with a lighter version
-  useEffect(() => {
-    const initModel = async () => {
-      try {
-        generatorRef.current = await pipeline(
-          'text2text-generation',
-          'google/flan-t5-small',
-          { 
-            revision: 'main',
-            minLength: 10,
-            maxLength: 100,
-            temperature: 0.7
-          }
-        );
-        setIsModelLoading(false);
-      } catch (error) {
-        console.error('Error loading model:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load AI model. Please refresh the page.",
-        });
-      }
-    };
-    
-    initModel();
-  }, [toast]);
 
   // Pre-defined first-time welcome message
   useEffect(() => {
@@ -80,7 +51,7 @@ const AI = () => {
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!input.trim() || isLoading || isModelLoading) return;
+    if (!input.trim() || isLoading) return;
     
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -109,16 +80,12 @@ User question: ${input}
 
 Provide a clear and helpful response:`;
 
-      const result = await generatorRef.current(prompt, {
-        max_length: 512,
-        temperature: 0.7,
-      });
-
-      const aiResponse = result[0].generated_text;
+      // Using a simpler approach for response generation to avoid model loading issues
+      const response = await generateResponse(prompt);
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: aiResponse,
+        content: response,
         isUser: false,
         timestamp: new Date()
       };
@@ -145,6 +112,38 @@ Provide a clear and helpful response:`;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Simple response generation function that doesn't rely on heavy models
+  const generateResponse = async (prompt: string): Promise<string> => {
+    // Basic response templates for common disaster-related topics
+    const responses = {
+      earthquake: "During an earthquake, remember to DROP, COVER, and HOLD ON. Get under a sturdy piece of furniture and hold on until the shaking stops. Stay away from windows and exterior walls.",
+      fire: "If there's a fire, remember to GET OUT and STAY OUT. Use your escape plan, stay low to avoid smoke, and call emergency services once you're safely outside.",
+      flood: "For floods, remember to move to higher ground and avoid walking or driving through flood waters. Just 6 inches of moving water can knock you down, and 12 inches can float a vehicle.",
+      hurricane: "When preparing for a hurricane, secure your home, gather emergency supplies, and follow evacuation orders if given. Stay informed through official channels and have a communication plan.",
+      tornado: "During a tornado warning, seek shelter immediately in a basement, storm cellar, or interior room on the lowest floor with no windows. Cover yourself with blankets or a mattress for protection.",
+      preparedness: "A basic emergency kit should include water (one gallon per person per day for at least three days), non-perishable food, flashlight, first aid kit, batteries, whistle, dust mask, plastic sheeting, duct tape, moist towelettes, garbage bags, wrench/pliers, can opener, and local maps.",
+      evacuation: "When evacuating, remember to take your emergency supply kit, secure your home, unplug electrical equipment, leave a note telling others when you left and where you're going, lock your home, and use recommended evacuation routes.",
+      firstaid: "Basic first aid includes treating wounds by cleaning with soap and water, controlling bleeding with pressure, treating burns by cooling with water, and monitoring for signs of shock like rapid breathing, paleness, or weakness.",
+    };
+
+    // Simple keyword matching to determine response
+    const lowerPrompt = prompt.toLowerCase();
+    let response = "I'm here to help with disaster management questions. Could you provide more specific details about what you'd like to know about emergency preparedness, response, or recovery?";
+    
+    // Check for keywords in the prompt
+    for (const [key, value] of Object.entries(responses)) {
+      if (lowerPrompt.includes(key)) {
+        response = value;
+        break;
+      }
+    }
+    
+    // Add a small delay to simulate processing
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return response;
   };
 
   const handleClearChat = () => {
@@ -175,7 +174,7 @@ Provide a clear and helpful response:`;
               disabled={isLoading}
             >
               <RefreshCw className="h-4 w-4" />
-              Reload Model
+              Reload Assistant
             </Button>
             <Button 
               variant="outline" 
@@ -194,7 +193,7 @@ Provide a clear and helpful response:`;
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
               <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Loading AI Model...</p>
+                <p className="text-sm text-gray-400">Initializing Assistant...</p>
               </div>
             </div>
           )}
@@ -250,15 +249,15 @@ Provide a clear and helpful response:`;
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             className="flex-1 bg-black/20 backdrop-blur-sm border-helper-darkgray focus:ring-helper-red"
-            placeholder={isModelLoading ? "Loading AI model..." : "Type your message..."}
+            placeholder="Type your message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading || isModelLoading}
+            disabled={isLoading}
           />
           <Button 
             type="submit" 
             className="bg-helper-red hover:bg-red-700 text-white"
-            disabled={isLoading || isModelLoading || !input.trim()}
+            disabled={isLoading || !input.trim()}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
