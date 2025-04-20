@@ -11,17 +11,24 @@ import { DialogClose } from '@radix-ui/react-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Contact } from '@/types';
 
+// Updated emergency contacts for India
 const emergencyServices: Contact[] = [
-  { id: 'emergency-1', name: 'Emergency Services', phone: '911', type: 'emergency', notes: 'For immediate life-threatening emergencies' },
-  { id: 'emergency-2', name: 'Police Department', phone: '(555) 123-4567', type: 'emergency', notes: 'For non-emergency police assistance' },
-  { id: 'emergency-3', name: 'Fire Department', phone: '(555) 234-5678', type: 'emergency', notes: 'For non-emergency fire assistance' },
-  { id: 'emergency-4', name: 'Poison Control', phone: '(800) 222-1222', type: 'emergency', notes: 'For poison emergencies and information' },
+  { id: 'emergency-1', name: 'Police (Emergency)', phone: '100', type: 'emergency', notes: 'For immediate police assistance' },
+  { id: 'emergency-2', name: 'Ambulance (Emergency)', phone: '108', type: 'emergency', notes: 'Medical emergencies and ambulance' },
+  { id: 'emergency-3', name: 'Fire Brigade', phone: '101', type: 'emergency', notes: 'Fire emergencies' },
+  { id: 'emergency-4', name: 'Disaster Management', phone: '1078', type: 'emergency', notes: 'Natural disaster assistance' },
+  { id: 'emergency-5', name: 'Women Helpline', phone: '1091', type: 'emergency', notes: 'For women in distress' },
+  { id: 'emergency-6', name: 'Child Helpline', phone: '1098', type: 'emergency', notes: 'For children in need of care and protection' },
+  { id: 'emergency-7', name: 'Senior Citizen Helpline', phone: '14567', type: 'emergency', notes: 'Help for senior citizens' },
+  { id: 'emergency-8', name: 'Railway Enquiry', phone: '139', type: 'emergency', notes: 'Railway information and emergencies' },
+  { id: 'emergency-9', name: 'Tourist Helpline', phone: '1363', type: 'emergency', notes: 'Help for tourists in India' },
+  { id: 'emergency-10', name: 'COVID Helpline', phone: '1075', type: 'emergency', notes: 'COVID-19 related information and help' },
 ];
 
 const defaultContacts: Contact[] = [
-  { id: '1', name: 'John Smith', phone: '(555) 345-6789', type: 'family', notes: 'Primary emergency contact' },
-  { id: '2', name: 'Sarah Johnson', phone: '(555) 456-7890', type: 'friend', notes: 'Lives nearby, has spare key' },
-  { id: '3', name: 'Dr. Wilson', phone: '(555) 567-8901', type: 'medical', notes: 'Primary care physician' },
+  { id: '1', name: 'Family Member', phone: '(555) 345-6789', type: 'family', notes: 'Primary emergency contact' },
+  { id: '2', name: 'Friend', phone: '(555) 456-7890', type: 'friend', notes: 'Lives nearby' },
+  { id: '3', name: 'Family Doctor', phone: '(555) 567-8901', type: 'medical', notes: 'Primary care physician' },
 ];
 
 const Contacts = () => {
@@ -175,12 +182,12 @@ const Contacts = () => {
 
   return (
     <Layout title="Contacts">
-      <div className="container mx-auto p-4 md:p-6">
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="relative flex-1">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <Input
-              className="pl-10 bg-helper-darkgray border-helper-darkgray"
+              className="pl-10 bg-helper-darkgray border-helper-darkgray w-full"
               placeholder="Search contacts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -188,7 +195,7 @@ const Contacts = () => {
           </div>
           
           <Button 
-            className="bg-helper-red hover:bg-red-700 text-white"
+            className="bg-helper-red hover:bg-red-700 text-white w-full md:w-auto"
             onClick={() => setIsAddDialogOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" /> Add Contact
@@ -196,14 +203,16 @@ const Contacts = () => {
         </div>
 
         <Tabs defaultValue="all" onValueChange={setActiveTab}>
-          <TabsList className="bg-helper-darkgray mb-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="emergency">Emergency</TabsTrigger>
-            <TabsTrigger value="family">Family</TabsTrigger>
-            <TabsTrigger value="friend">Friends</TabsTrigger>
-            <TabsTrigger value="medical">Medical</TabsTrigger>
-            <TabsTrigger value="other">Other</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-2">
+            <TabsList className="bg-helper-darkgray mb-4 w-max md:w-full">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="emergency">Emergency</TabsTrigger>
+              <TabsTrigger value="family">Family</TabsTrigger>
+              <TabsTrigger value="friend">Friends</TabsTrigger>
+              <TabsTrigger value="medical">Medical</TabsTrigger>
+              <TabsTrigger value="other">Other</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value={activeTab} className="space-y-4">
             {filteredContacts.length > 0 ? (
@@ -216,18 +225,18 @@ const Contacts = () => {
                     className={`${isEmergency ? 'bg-helper-red/10' : 'bg-helper-darkgray'} border-helper-darkgray hover:border-helper-red transition-colors`}
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-helper-darkgray rounded-full p-2 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="bg-helper-darkgray rounded-full p-2">
                             <UserCircle className={`h-6 w-6 ${isEmergency ? 'text-helper-red' : 'text-gray-400'}`} />
                           </div>
                           
-                          <div>
-                            <h3 className="font-medium">{contact.name}</h3>
-                            <p className="text-sm text-gray-400">{contact.phone}</p>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium truncate">{contact.name}</h3>
+                            <p className="text-sm text-gray-400 break-all">{contact.phone}</p>
                             
                             {contact.notes && (
-                              <p className="text-xs text-gray-400 mt-1">{contact.notes}</p>
+                              <p className="text-xs text-gray-400 mt-1 truncate">{contact.notes}</p>
                             )}
                             
                             <div className="mt-2">
@@ -238,7 +247,7 @@ const Contacts = () => {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end sm:justify-start gap-2">
                           <Button 
                             variant="ghost" 
                             size="icon"
@@ -297,7 +306,7 @@ const Contacts = () => {
         
         {/* Add Contact Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="bg-helper-darkgray border-helper-darkgray sm:max-w-md">
+          <DialogContent className="bg-helper-darkgray border-helper-darkgray sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Contact</DialogTitle>
             </DialogHeader>
@@ -349,15 +358,15 @@ const Contacts = () => {
               </div>
             </div>
             
-            <DialogFooter className="flex justify-end gap-2">
+            <DialogFooter className="flex flex-col sm:flex-row justify-end gap-2">
               <DialogClose asChild>
-                <Button variant="outline" className="gap-1">
+                <Button variant="outline" className="gap-1 w-full sm:w-auto">
                   <X size={16} /> Cancel
                 </Button>
               </DialogClose>
               <Button 
                 type="submit" 
-                className="bg-helper-red hover:bg-red-700 text-white gap-1"
+                className="bg-helper-red hover:bg-red-700 text-white gap-1 w-full sm:w-auto"
                 onClick={handleAddContact}
               >
                 <Save size={16} /> Save
@@ -368,7 +377,7 @@ const Contacts = () => {
         
         {/* Edit Contact Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="bg-helper-darkgray border-helper-darkgray sm:max-w-md">
+          <DialogContent className="bg-helper-darkgray border-helper-darkgray sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Contact</DialogTitle>
             </DialogHeader>
@@ -420,15 +429,15 @@ const Contacts = () => {
               </div>
             </div>
             
-            <DialogFooter className="flex justify-end gap-2">
+            <DialogFooter className="flex flex-col sm:flex-row justify-end gap-2">
               <DialogClose asChild>
-                <Button variant="outline" className="gap-1">
+                <Button variant="outline" className="gap-1 w-full sm:w-auto">
                   <X size={16} /> Cancel
                 </Button>
               </DialogClose>
               <Button 
                 type="submit" 
-                className="bg-helper-red hover:bg-red-700 text-white gap-1"
+                className="bg-helper-red hover:bg-red-700 text-white gap-1 w-full sm:w-auto"
                 onClick={handleEditContact}
               >
                 <Save size={16} /> Save
@@ -449,15 +458,15 @@ const Contacts = () => {
               <p className="text-sm text-gray-400 mt-2">This action cannot be undone.</p>
             </div>
             
-            <DialogFooter className="flex justify-end gap-2">
+            <DialogFooter className="flex flex-col sm:flex-row justify-end gap-2">
               <DialogClose asChild>
-                <Button variant="outline" className="gap-1">
+                <Button variant="outline" className="gap-1 w-full sm:w-auto">
                   <X size={16} /> Cancel
                 </Button>
               </DialogClose>
               <Button 
                 variant="destructive"
-                className="gap-1"
+                className="gap-1 w-full sm:w-auto"
                 onClick={handleDeleteContact}
               >
                 <Trash2 size={16} /> Delete

@@ -23,7 +23,7 @@ export const Layout = ({ children, title }: LayoutProps) => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex-1 overflow-auto flex justify-center">
       {!isHomePage && <AppSidebar />}
       
       <div className="flex-1 flex flex-col overflow-hidden">
