@@ -102,13 +102,33 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         <Card className="bg-helper-red">
           <CardContent className="p-3 flex items-center justify-center">
-            <Button 
-              variant="ghost" 
-              className="text-white font-bold w-full"
-              onClick={() => navigate('/alerts')}
-            >
-              {isCollapsed ? 'SOS' : 'Emergency SOS'}
-            </Button>
+          <Button 
+            variant="ghost" 
+            className="text-white font-bold w-full"
+            onClick={async () => {
+              try {
+                if (!navigator.geolocation) {
+                  alert('Geolocation is not supported by your browser');
+                  return;
+                }
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                  const latitude = position.coords.latitude;
+                  const longitude = position.coords.longitude;
+                  const locationUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+                  const message = `Emergency! My current location: ${locationUrl}`;
+                  await navigator.clipboard.writeText(message);
+                  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                  window.open(whatsappUrl, '_blank');
+                }, () => {
+                  alert('Unable to retrieve your location');
+                });
+              } catch (error) {
+                alert('Error occurred: ' + error);
+              }
+            }}
+          >
+            {isCollapsed ? 'SOS' : 'Emergency SOS'}
+          </Button>
           </CardContent>
         </Card>
       </SidebarFooter>

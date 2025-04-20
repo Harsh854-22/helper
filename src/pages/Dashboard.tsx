@@ -1,13 +1,33 @@
-
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MapPin, Phone, Cloud, BrainCircuit } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  
+
+  const [blogPosts, setBlogPosts] = useState([]);
+
+  useEffect(() => {
+    fetchBlogPosts();
+  }, []);
+
+  const fetchBlogPosts = async () => {
+    const { data, error } = await supabase
+      .from('blogposts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(3);
+    if (error) {
+      console.error('Error fetching blog posts:', error.message);
+    } else {
+      setBlogPosts(data || []);
+    }
+  };
+
   // Mock recent alerts
   const recentAlerts = [
     { id: 1, type: 'Flood', location: 'Downtown Area', time: '2 hours ago', severity: 'high' },
@@ -126,6 +146,32 @@ const Dashboard = () => {
               View all alerts
             </Button>
           </div>
+        </div>
+
+        {/* Blogspot Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Recent Blogspot Posts</h2>
+          {blogPosts.length > 0 ? (
+            <div className="space-y-3">
+              {blogPosts.map((post) => (
+                <Card key={post.id} className="bg-helper-darkgray border-helper-darkgray hover:border-helper-red transition-colors">
+                  <CardContent className="p-4">
+                    <h3 className="font-medium text-helper-red">{post.title}</h3>
+                    <p className="text-sm text-gray-400 mb-2">Added on {new Date(post.created_at).toLocaleString()}</p>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/blogspot')}>
+                      View Blogspot
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-helper-darkgray border-helper-darkgray">
+              <CardContent className="p-4 text-center text-gray-400">
+                No recent blog posts available
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </Layout>
