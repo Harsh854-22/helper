@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 interface BlogPost {
   id: string;
-  filename: string;
+  title: string;
   url: string;
   created_at: string;
   created_by: string;
@@ -16,30 +16,14 @@ interface BlogPost {
 const Blogspot = () => {
   const { user } = useAuth();
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [newUrl, setNewUrl] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [publicUrls, setPublicUrls] = useState<Record<string, string>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchBlogPosts();
   }, []);
-
-  useEffect(() => {
-    const fetchUrls = async () => {
-      const urls: Record<string, string> = {};
-      for (const post of blogPosts) {
-        const { data } = supabase.storage.from('blogposts').getPublicUrl(post.url);
-        if (data?.publicUrl) {
-          urls[post.id] = data.publicUrl;
-        }
-      }
-      setPublicUrls(urls);
-    };
-    if (blogPosts.length > 0) {
-      fetchUrls();
-    }
-  }, [blogPosts]);
 
   const fetchBlogPosts = async () => {
     const { data, error } = await supabase
@@ -47,7 +31,6 @@ const Blogspot = () => {
       .select('*')
       .order('created_at', { ascending: false });
     if (error) {
-      console.error('Error fetching blog posts:', error.message);
       setErrorMessage('Error fetching blog posts: ' + error.message);
     } else {
       setBlogPosts(data || []);
@@ -55,47 +38,40 @@ const Blogspot = () => {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddBlog = async () => {
     setErrorMessage(null);
     if (!user) {
-      alert('You must be logged in to upload blog posts.');
+      alert('You must be logged in to add blog posts.');
       return;
     }
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    if (file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      alert('Only DOCX files are allowed.');
+    if (!newUrl || !newTitle) {
+      alert('Please provide both title and Google Docs URL.');
       return;
     }
-    setUploading(true);
-    const filePath = `blogposts/${user.id}/${Date.now()}_${file.name}`;
-    const { error: uploadError } = await supabase.storage
+    // Basic validation for Google Docs URL
+    if (!newUrl.includes('docs.google.com/document')) {
+      alert('Please provide a valid Google Docs document URL.');
+      return;
+    }
+    setLoading(true);
+    const id = `${user.id}_${Date.now()}`;
+    const { error } = await supabase
       .from('blogposts')
-      .upload(filePath, file, { upsert: true });
-    if (uploadError) {
-      setErrorMessage('Upload failed: ' + uploadError.message);
-      setUploading(false);
-      return;
-    }
-    const { error: insertError } = await supabase
-      .from('blogposts')
-      .upsert({
-        id: filePath,
-        filename: file.name,
-        url: filePath,
+      .insert({
+        id,
+        title: newTitle,
+        url: newUrl,
         created_by: user.id,
         created_at: new Date().toISOString(),
       });
-    if (insertError) {
-      setErrorMessage('Failed to save blog post metadata: ' + insertError.message + '. Please check your Supabase RLS policies.');
+    if (error) {
+      setErrorMessage('Failed to add blog post: ' + error.message);
     } else {
+      setNewUrl('');
+      setNewTitle('');
       fetchBlogPosts();
     }
-    setUploading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setLoading(false);
   };
 
   const myBlogs = blogPosts.filter(post => post.created_by === user?.id);
@@ -111,17 +87,28 @@ const Blogspot = () => {
           </div>
         )}
         {user && (
-          <div className="mb-6">
+          <div className="mb-6 space-y-2">
             <input
-              type="file"
-              accept=".docx"
-              onChange={handleFileUpload}
-              ref={fileInputRef}
-              disabled={uploading}
+              type="text"
+              placeholder="Blog Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="w-full p-2 rounded border border-gray-300 text-black bg-white"
+              disabled={loading}
             />
-            {uploading && <p className="text-helper-red">Uploading...</p>}
+            <input
+              type="url"
+              placeholder="Google Docs URL"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              className="w-full p-2 rounded border border-gray-300 text-black bg-white"
+              disabled={loading}
+            />
+            <Button onClick={handleAddBlog} disabled={loading}>
+              {loading ? 'Adding...' : 'Add Blog'}
+            </Button>
             <p className="text-sm text-gray-400 mt-2">
-              Upload DOCX files as blog posts. To edit or remove a post, download it, make changes locally, and re-upload.
+              Add your Google Docs blog URL here. Others can view it but only you can edit it via Google Docs.
             </p>
           </div>
         )}
@@ -129,26 +116,26 @@ const Blogspot = () => {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-helper-red">My Blogs</h2>
           {myBlogs.length === 0 ? (
-            <p className="text-helper-red">You have not uploaded any blogs yet.</p>
+            <p className="text-helper-red">You have not added any blogs yet.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-4">
               {myBlogs.map((post) => (
                 <Card key={post.id} className="bg-helper-darkgray border-helper-darkgray hover:border-helper-red transition-colors">
                   <CardHeader>
-                    <CardTitle className="text-helper-red">{post.filename}</CardTitle>
-                    <CardDescription>Uploaded on {new Date(post.created_at).toLocaleString()}</CardDescription>
+                    <CardTitle className="text-helper-red">{post.title}</CardTitle>
+                    <CardDescription>Added on {new Date(post.created_at).toLocaleString()}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <a
-                      href={publicUrls[post.id] || '#'}
+                      href={post.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-helper-red underline"
                     >
-                      View / Download
+                      View Blog on Google Docs
                     </a>
                     <p className="mt-2 text-sm text-gray-400">
-                      You are the creator. To edit or remove this post, download it, make changes locally, and re-upload.
+                      You are the creator. Edit your blog directly in Google Docs.
                     </p>
                   </CardContent>
                 </Card>
@@ -162,21 +149,21 @@ const Blogspot = () => {
           {otherBlogs.length === 0 ? (
             <p className="text-helper-red">No other blogs available.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-4">
               {otherBlogs.map((post) => (
                 <Card key={post.id} className="bg-helper-darkgray border-helper-darkgray hover:border-helper-red transition-colors">
                   <CardHeader>
-                    <CardTitle className="text-helper-red">{post.filename}</CardTitle>
-                    <CardDescription>Uploaded on {new Date(post.created_at).toLocaleString()}</CardDescription>
+                    <CardTitle className="text-helper-red">{post.title}</CardTitle>
+                    <CardDescription>Added on {new Date(post.created_at).toLocaleString()}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <a
-                      href={publicUrls[post.id] || '#'}
+                      href={post.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-helper-red underline"
                     >
-                      View / Download
+                      View Blog on Google Docs
                     </a>
                   </CardContent>
                 </Card>
