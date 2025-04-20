@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import DisasterKitStores from "./pages/DisasterKitStores";
 import Blogspot from "./pages/Blogspot";
+import VolunteerSignup from "./pages/VolunteerSignup";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -119,6 +120,14 @@ const App = () => (
                 } 
               />
               <Route 
+                path="/VolunteerSignup" 
+                element={
+                  <ProtectedRoute>
+                    <VolunteerSignup />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
                 path="/blogspot" 
                 element={
                   <ProtectedRoute>
@@ -126,6 +135,7 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

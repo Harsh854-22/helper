@@ -38,15 +38,16 @@ export function AppSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(isMobile);
 
   const navItems = [
+    { title: 'Profile', icon: User, path: '/profile' },
     { title: 'Dashboard', icon: Home, path: '/dashboard' },
+    { title: 'Contacts', icon: Phone, path: '/contacts' },
+    { title: 'Weather', icon: Cloud, path: '/weather' },
     { title: 'Alerts', icon: AlertCircle, path: '/alerts' },
     { title: 'Resources', icon: MapPin, path: '/resources' },
-    { title: 'Contacts', icon: Phone, path: '/contacts' },
-    { title: 'Profile', icon: User, path: '/profile' },
     { title: 'AI Assistant', icon: BrainCircuit, path: '/ai' },
-    { title: 'Weather', icon: Cloud, path: '/weather' },
     { title: 'Disaster Kit Stores', icon: ShoppingCart, path: '/disaster-kit-stores' },
     { title: 'Blogspot', icon: BrainCircuit, path: '/blogspot' },
+    { title: 'Volunteer', icon: BrainCircuit, path: '/VolunteerSignup' },
   ];
 
   return (

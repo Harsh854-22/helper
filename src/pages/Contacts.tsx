@@ -22,7 +22,6 @@ const emergencyServices: Contact[] = [
   { id: 'emergency-7', name: 'Senior Citizen Helpline', phone: '14567', type: 'emergency', notes: 'Help for senior citizens' },
   { id: 'emergency-8', name: 'Railway Enquiry', phone: '139', type: 'emergency', notes: 'Railway information and emergencies' },
   { id: 'emergency-9', name: 'Tourist Helpline', phone: '1363', type: 'emergency', notes: 'Help for tourists in India' },
-  { id: 'emergency-10', name: 'COVID Helpline', phone: '1075', type: 'emergency', notes: 'COVID-19 related information and help' },
 ];
 
 const defaultContacts: Contact[] = [
