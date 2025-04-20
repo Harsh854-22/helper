@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +16,6 @@ import AI from "./pages/AI";
 import Weather from "./pages/Weather";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-import Store from "./pages/Store";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +52,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/store" element={<Store />} />
               <Route 
                 path="/dashboard" 
                 element={
