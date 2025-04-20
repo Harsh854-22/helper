@@ -2,16 +2,14 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LifeBuoy } from 'lucide-react';
+import { LifeBuoy, ShieldAlert, MapPin, Cloud, Package2 } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Check if user has visited before
     const hasVisited = localStorage.getItem('helper-visited');
     if (hasVisited) {
-      // Auto-redirect to dashboard for returning users
       navigate('/dashboard');
     }
   }, [navigate]);
@@ -21,50 +19,74 @@ const Index = () => {
     navigate('/dashboard');
   };
 
+  const features = [
+    {
+      icon: ShieldAlert,
+      title: "Real-time Alerts",
+      description: "Get instant notifications about emergencies in your area"
+    },
+    {
+      icon: MapPin,
+      title: "Location Sharing",
+      description: "Share your location with emergency contacts via WhatsApp"
+    },
+    {
+      icon: Cloud,
+      title: "Weather Monitoring",
+      description: "Live weather updates and forecasts"
+    },
+    {
+      icon: Package2,
+      title: "Emergency Supplies",
+      description: "Access our marketplace for disaster preparedness kits"
+    }
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-helper-black p-4">
-      <div className="text-center max-w-md">
-        <div className="flex justify-center mb-6">
-          <div className="bg-helper-red p-4 rounded-full">
-            <LifeBuoy size={50} className="text-white" />
+    <div className="min-h-screen bg-gradient-to-b from-helper-black to-helper-darkgray">
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-16">
+          <div className="flex justify-center mb-6 animate-bounce">
+            <div className="bg-helper-red p-4 rounded-full">
+              <LifeBuoy size={50} className="text-white" />
+            </div>
           </div>
-        </div>
-        
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          Welcome to <span className="text-helper-red">Helper</span>
-        </h1>
-        
-        <p className="text-xl text-gray-300 mb-8">
-          Your comprehensive disaster management companion
-        </p>
-        
-        <div className="space-y-6">
-          <ul className="text-left space-y-2">
-            {[
-              "Real-time disaster alerts",
-              "Find nearby emergency resources",
-              "Store emergency contacts",
-              "AI-powered assistance",
-              "Weather monitoring"
-            ].map((feature, index) => (
-              <li key={index} className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-helper-red" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
+          
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            Stay Safe with <span className="text-helper-red">Helper</span>
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Your comprehensive disaster management companion powered by AI
+          </p>
           
           <Button 
             onClick={handleGetStarted}
-            className="w-full bg-helper-red hover:bg-red-700 text-white py-3 text-lg"
+            className="bg-helper-red hover:bg-red-700 text-white py-6 px-8 text-lg rounded-full transition-all duration-300 hover:scale-105"
           >
-            Get Started
+            Get Started Now
           </Button>
         </div>
-        
-        <p className="mt-6 text-sm text-gray-400">
-          Be prepared. Stay safe. Help others.
-        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {features.map((feature, index) => (
+            <div
+              key={index}
+              className="bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-gray-800 hover:border-helper-red transition-all duration-300"
+            >
+              <feature.icon className="w-12 h-12 text-helper-red mb-4" />
+              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+              <p className="text-gray-400">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-500 max-w-2xl mx-auto">
+            By using Helper, you're taking an important step towards better emergency preparedness.
+            Our AI-powered platform ensures you're always ready for the unexpected.
+          </p>
+        </div>
       </div>
     </div>
   );
