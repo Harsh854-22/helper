@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -64,26 +63,35 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-helper-black to-helper-darkgray">
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-16">
-          <div className="flex justify-center mb-6 animate-bounce">
-            <div className="bg-helper-red p-4 rounded-full">
+          <div className="flex justify-center mb-6">
+            <div className="bg-helper-red p-4 rounded-full animate-bounce">
               <LifeBuoy size={50} className="text-white" />
             </div>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Stay Safe with <span className="text-helper-red">Helper</span>
+            Your Emergency <span className="text-helper-red">Response</span> Partner
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Your comprehensive disaster management companion powered by AI
+            Stay prepared with real-time alerts, weather updates, and emergency supplies
           </p>
           
-          <Button 
-            onClick={handleGetStarted}
-            className="bg-helper-red hover:bg-red-700 text-white py-6 px-8 text-lg rounded-full transition-all duration-300 hover:scale-105"
-          >
-            Get Started Now
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button 
+              onClick={handleGetStarted}
+              className="bg-helper-red hover:bg-red-700 text-white py-6 px-8 text-lg rounded-full transition-all duration-300 hover:scale-105"
+            >
+              Get Started Now
+            </Button>
+            <Button 
+              onClick={() => navigate('/store')}
+              variant="outline"
+              className="border-helper-red text-helper-red hover:bg-helper-red/10 py-6 px-8 text-lg rounded-full"
+            >
+              Visit Emergency Store
+            </Button>
+          </div>
         </div>
 
         <section className="mb-16">

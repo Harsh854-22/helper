@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,8 +21,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { WeatherData } from '@/types';
 
-// OpenWeatherMap API key
-const OPENWEATHER_API_KEY = "ADD_YOUR_KEY_HERE"; // Replace with your API key
+// Update OpenWeather API key
+const OPENWEATHER_API_KEY = "3bda9fb4f7d808a621c9495a097d8379";
 
 const Weather = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -62,65 +61,53 @@ const Weather = () => {
     }
   }, [toast]);
 
-  // Fetch weather data when location is available
+  // Update the fetchWeather function to use real API
   useEffect(() => {
     if (!location) return;
     
     const fetchWeather = async () => {
       try {
         setIsLoading(true);
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`
+        );
         
-        // If using a real API key
-        if (OPENWEATHER_API_KEY !== "ADD_YOUR_KEY_HERE") {
-          const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`
-          );
-          
-          if (!response.ok) {
-            throw new Error("Weather API request failed");
-          }
-          
-          const data = await response.json();
-          
-          // Transform API data to our format
-          const transformedData: WeatherData = {
-            location: "Current Location",
-            temperature: Math.round(data.current.temp),
-            humidity: data.current.humidity,
-            windSpeed: Math.round(data.current.wind_speed),
-            windDirection: getWindDirection(data.current.wind_deg),
-            description: data.current.weather[0].description,
-            condition: mapWeatherCondition(data.current.weather[0].main),
-            forecast: data.daily.slice(0, 5).map((day: any, index: number) => ({
-              day: index === 0 ? "Today" : index === 1 ? "Tomorrow" : new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
-              temperature: Math.round(day.temp.day),
-              condition: mapWeatherCondition(day.weather[0].main)
-            })),
-            alerts: data.alerts ? data.alerts.map((alert: any) => ({
-              type: alert.event,
-              description: alert.description,
-              severity: getSeverityFromEvent(alert.event)
-            })) : [],
-            lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          
-          setWeatherData(transformedData);
-        } else {
-          // Use sample data if no API key is provided
-          const sampleData = getSampleWeatherData();
-          setTimeout(() => {
-            setWeatherData(sampleData);
-          }, 1000);
+        if (!response.ok) {
+          throw new Error("Weather API request failed");
         }
+        
+        const data = await response.json();
+        
+        // Transform API data to our format
+        const transformedData: WeatherData = {
+          location: "Current Location",
+          temperature: Math.round(data.current.temp),
+          humidity: data.current.humidity,
+          windSpeed: Math.round(data.current.wind_speed),
+          windDirection: getWindDirection(data.current.wind_deg),
+          description: data.current.weather[0].description,
+          condition: mapWeatherCondition(data.current.weather[0].main),
+          forecast: data.daily.slice(0, 5).map((day: any, index: number) => ({
+            day: index === 0 ? "Today" : index === 1 ? "Tomorrow" : new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
+            temperature: Math.round(day.temp.day),
+            condition: mapWeatherCondition(day.weather[0].main)
+          })),
+          alerts: data.alerts ? data.alerts.map((alert: any) => ({
+            type: alert.event,
+            description: alert.description,
+            severity: getSeverityFromEvent(alert.event)
+          })) : [],
+          lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setWeatherData(transformedData);
       } catch (error) {
         console.error("Error fetching weather:", error);
         toast({
           variant: "destructive",
           title: "Error fetching weather data",
-          description: "Using sample data instead."
+          description: "Could not fetch weather data. Please try again later."
         });
-        // Fallback to sample data
-        setWeatherData(getSampleWeatherData());
       } finally {
         setIsLoading(false);
       }

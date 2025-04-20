@@ -1,9 +1,8 @@
-
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, MapPin, Phone, Cloud, BrainCircuit } from 'lucide-react';
+import { AlertCircle, MapPin, Phone, Cloud, BrainCircuit, Store } from 'lucide-react';
+import { SOSButton } from '@/components/SOSButton';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -68,11 +67,22 @@ const Dashboard = () => {
             </CardHeader>
           </Card>
           
-          <Card className="bg-helper-red text-white border-helper-red hover:bg-red-700 transition-colors cursor-pointer" onClick={() => navigate('/alerts')}>
+          <Card 
+            className="bg-helper-darkgray border-helper-darkgray hover:border-helper-red transition-colors cursor-pointer" 
+            onClick={() => navigate('/store')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Store className="h-5 w-5 text-helper-red" />
+                Store
+              </CardTitle>
+              <CardDescription>Browse emergency supplies</CardDescription>
+            </CardHeader>
+          </Card>
+          
+          <Card className="bg-helper-darkgray border-helper-darkgray">
             <CardContent className="flex items-center justify-center p-6">
-              <Button variant="ghost" className="text-white text-lg font-bold">
-                Emergency SOS
-              </Button>
+              <SOSButton />
             </CardContent>
           </Card>
         </div>
