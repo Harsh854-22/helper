@@ -17,6 +17,7 @@ import Weather from "./pages/Weather";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import DisasterKitStores from "./pages/DisasterKitStores";
+import Blogspot from "./pages/Blogspot";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <DisasterKitStores />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/blogspot" 
+                element={
+                  <ProtectedRoute>
+                    <Blogspot />
                   </ProtectedRoute>
                 } 
               />

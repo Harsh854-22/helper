@@ -12,117 +12,168 @@ const AI = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
+  const [lastRequestTime, setLastRequestTime] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Cohere API configuration
+  const API_KEY = 'dYg6q2jklLEK2Ewg95sciu9zoWnyCdvHLELzWiqj';
+  const API_URL = 'https://api.cohere.ai/v1/chat';
+
+  // Pre-defined first-time welcome message
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        content:
-          "Hello, I'm your disaster management assistant. I can help with emergency preparedness, provide information about current disasters, or answer questions about safety procedures. How can I assist you today?",
+        content: "Hello, I'm your disaster management assistant. I can help with emergency preparedness, provide information about current disasters, or answer questions about safety procedures. How can I assist you today?",
         isUser: false,
-        timestamp: new Date(),
+        timestamp: new Date()
       };
       setMessages([welcomeMessage]);
     }
-
+    
+    // Load messages from localStorage
     const savedMessages = localStorage.getItem('helper-ai-messages');
     if (savedMessages && messages.length <= 1) {
       setMessages(JSON.parse(savedMessages));
     }
   }, []);
-
+  
+  // Save messages to localStorage when they change
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem('helper-ai-messages', JSON.stringify(messages));
     }
   }, [messages]);
-
+  
+  // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
     if (!input.trim() || isLoading) return;
-
+    
+    // Rate limiting
+    const now = Date.now();
+    if (now - lastRequestTime < 1000) {
+      toast({
+        title: "Please wait",
+        description: "Sending messages too quickly. Wait a moment before sending another.",
+      });
+      return;
+    }
+    setLastRequestTime(now);
+    
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
       isUser: true,
-      timestamp: new Date(),
+      timestamp: new Date()
     };
-
-    setMessages((prev) => [...prev, userMessage]);
+    
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-
+    
     try {
-      const recentMessages = messages.slice(-5);
-      const context = recentMessages
-        .map((msg) => `${msg.isUser ? 'User' : 'Assistant'}: ${msg.content}`)
-        .join('\n');
+      // Get conversation history in Cohere's format
+      const conversationHistory = messages.slice(-10).map(msg => ({
+        role: msg.isUser ? 'USER' : 'CHATBOT',
+        message: msg.content
+      }));
 
-      const prompt = `
-You are a disaster management assistant AI helping users with disaster preparedness, emergencies, and recovery.
-
-Previous conversation:
-${context}
-
-User: ${input}
-AI:
-`;
-
-      const response = await generateResponse(prompt);
-
+      const response = await generateResponse(input, conversationHistory);
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response,
         isUser: false,
-        timestamp: new Date(),
+        timestamp: new Date()
       };
-
-      setMessages((prev) => [...prev, botMessage]);
+      
+      setMessages(prev => [...prev, botMessage]);
+      
     } catch (error) {
       console.error('Error generating response:', error);
+      
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to get a response. Please try again later.',
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to get a response. Please try again later.",
       });
-
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: error.message || "I'm having trouble responding right now. Please try again.",
+        content: "I'm sorry, I couldn't process your request right now. Please try again later.",
         isUser: false,
-        timestamp: new Date(),
+        timestamp: new Date()
       };
-
-      setMessages((prev) => [...prev, errorMessage]);
+      
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const generateResponse = async (prompt: string): Promise<string> => {
+  const generateResponse = async (message: string, chatHistory: any[] = []): Promise<string> => {
     try {
-      const res = await fetch('/api/gemini', {
+      const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+          'Cohere-Version': '2022-12-06'
+        },
+        body: JSON.stringify({
+          message,
+          chat_history: chatHistory,
+          model: 'command',
+          temperature: 0.3,
+          prompt_truncation: 'AUTO',
+          connectors: [],
+          documents: [],
+          max_tokens: 1000
+        })
       });
 
-      const data = await res.json();
+      const data = await response.json();
       
-      if (res.ok && data?.result) {
-        return data.result.trim();
-      } else {
-        throw new Error(data.error || 'Invalid response from API');
+      if (!response.ok) {
+        console.error('API Error:', data);
+        throw new Error(data.message || 'API request failed');
       }
-    } catch (err) {
-      console.error('API request failed:', err);
-      throw new Error('Failed to communicate with the assistant service');
+
+      if (data.text) {
+        return data.text;
+      }
+      
+      throw new Error('Unexpected response format from API');
+    } catch (error) {
+      console.error('API Call Error:', error);
+      
+      // Fallback to hardcoded responses if API fails
+      const lowerMessage = message.toLowerCase();
+      const responses = {
+        earthquake: "During an earthquake, remember to DROP, COVER, and HOLD ON. Get under a sturdy piece of furniture and hold on until the shaking stops. Stay away from windows and exterior walls.",
+        fire: "If there's a fire, remember to GET OUT and STAY OUT. Use your escape plan, stay low to avoid smoke, and call emergency services once you're safely outside.",
+        flood: "For floods, remember to move to higher ground and avoid walking or driving through flood waters. Just 6 inches of moving water can knock you down, and 12 inches can float a vehicle.",
+        hurricane: "When preparing for a hurricane, secure your home, gather emergency supplies, and follow evacuation orders if given. Stay informed through official channels and have a communication plan.",
+        tornado: "During a tornado warning, seek shelter immediately in a basement, storm cellar, or interior room on the lowest floor with no windows. Cover yourself with blankets or a mattress for protection.",
+        preparedness: "A basic emergency kit should include water (one gallon per person per day for at least three days), non-perishable food, flashlight, first aid kit, batteries, whistle, dust mask, plastic sheeting, duct tape, moist towelettes, garbage bags, wrench/pliers, can opener, and local maps.",
+        evacuation: "When evacuating, remember to take your emergency supply kit, secure your home, unplug electrical equipment, leave a note telling others when you left and where you're going, lock your home, and use recommended evacuation routes.",
+        firstaid: "Basic first aid includes treating wounds by cleaning with soap and water, controlling bleeding with pressure, treating burns by cooling with water, and monitoring for signs of shock like rapid breathing, paleness, or weakness.",
+      };
+
+      for (const [key, value] of Object.entries(responses)) {
+        if (lowerMessage.includes(key)) {
+          return value;
+        }
+      }
+      
+      return "I'm here to help with disaster management questions. Could you provide more specific details about what you'd like to know about emergency preparedness, response, or recovery?";
     }
   };
 
@@ -130,91 +181,113 @@ AI:
     const welcomeMessage = messages[0];
     setMessages([welcomeMessage]);
     localStorage.setItem('helper-ai-messages', JSON.stringify([welcomeMessage]));
+    
     toast({
-      title: 'Chat cleared',
-      description: 'Your conversation history has been cleared.',
+      title: "Chat cleared",
+      description: "Your conversation history has been cleared.",
     });
   };
 
-  // UI remains exactly the same from here down
   return (
     <Layout title="AI Assistant">
-      <div className="container mx-auto px-4 py-6 flex flex-col h-[calc(100vh-4rem)]">
+      <div className="container mx-auto p-4 md:p-6 flex flex-col h-[calc(100vh-4rem)]">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-helper-red" />
-            <h2 className="text-xl font-semibold tracking-tight">Disaster Management Assistant</h2>
+            <h2 className="text-xl font-bold">Disaster Management Assistant</h2>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()} disabled={isLoading}>
-              <RefreshCw className="h-4 w-4 mr-1" /> Reload
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.reload()}
+              className="text-xs flex gap-1"
+              disabled={isLoading}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reload Assistant
             </Button>
-            <Button variant="outline" size="sm" onClick={handleClearChat} disabled={isLoading}>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleClearChat}
+              className="text-xs"
+              disabled={isLoading}
+            >
               Clear Chat
             </Button>
           </div>
         </div>
-
-        <Card className="flex-1 bg-black/20 backdrop-blur-sm border border-helper-darkgray overflow-hidden relative rounded-2xl shadow">
+        
+        <Card className="flex-1 overflow-hidden bg-black/20 backdrop-blur-sm border-helper-darkgray mb-4 relative">
           {isModelLoading && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
               <div className="text-center">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
                 <p className="text-sm text-gray-400">Initializing Assistant...</p>
               </div>
             </div>
           )}
-
-          <CardContent className="p-4 overflow-y-auto h-full space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] md:max-w-[70%] rounded-xl px-4 py-2 text-sm leading-relaxed ${
-                    message.isUser
-                      ? 'bg-helper-red text-white rounded-tr-none'
-                      : 'bg-helper-black border border-helper-darkgray text-white rounded-tl-none'
-                  }`}
+          <CardContent className="p-4 h-full overflow-y-auto">
+            <div className="space-y-4">
+              {messages.map((message) => (
+                <div 
+                  key={message.id}
+                  className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className="flex items-center gap-2 mb-1 text-xs opacity-70">
-                    {message.isUser ? <UserIcon className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                    {new Date(message.timestamp).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                  <div 
+                    className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 backdrop-blur-sm ${
+                      message.isUser 
+                        ? 'bg-helper-red/90 text-white rounded-tr-none' 
+                        : 'bg-helper-black/90 border border-helper-darkgray rounded-tl-none'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {message.isUser ? (
+                        <UserIcon className="h-4 w-4" />
+                      ) : (
+                        <Bot className="h-4 w-4" />
+                      )}
+                      <span className="text-xs opacity-70">
+                        {message.timestamp instanceof Date 
+                          ? message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        }
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
                   </div>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
                 </div>
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-helper-black border border-helper-darkgray rounded-xl px-4 py-2 text-sm text-white flex items-center gap-2 animate-pulse">
-                  <Bot className="h-4 w-4" />
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Thinking...
+              ))}
+              
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-helper-black/90 border border-helper-darkgray rounded-lg rounded-tl-none p-3 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-xs">Thinking...</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
           </CardContent>
         </Card>
-
-        <form onSubmit={handleSendMessage} className="flex gap-2 mt-4">
+        
+        <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
-            className="flex-1 bg-black/20 backdrop-blur-sm border-helper-darkgray text-white placeholder:text-gray-400 focus:ring-helper-red rounded-xl"
+            className="flex-1 bg-black/20 backdrop-blur-sm border-helper-darkgray focus:ring-helper-red"
             placeholder="Type your message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isLoading}
           />
-          <Button
-            type="submit"
-            className="bg-helper-red hover:bg-red-700 text-white rounded-xl"
+          <Button 
+            type="submit" 
+            className="bg-helper-red hover:bg-red-700 text-white"
             disabled={isLoading || !input.trim()}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

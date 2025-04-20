@@ -46,6 +46,7 @@ export function AppSidebar() {
     { title: 'AI Assistant', icon: BrainCircuit, path: '/ai' },
     { title: 'Weather', icon: Cloud, path: '/weather' },
     { title: 'Disaster Kit Stores', icon: ShoppingCart, path: '/disaster-kit-stores' },
+    { title: 'Blogspot', icon: BrainCircuit, path: '/blogspot' },
   ];
 
   return (
