@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LifeBuoy, ShieldAlert, MapPin, Cloud, Package2, Truck, FirstAid, Flashlight } from 'lucide-react';
+import { LifeBuoy, ShieldAlert, MapPin, Cloud, Package2, Truck, 
+         Ambulance, Flashlight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Index = () => {
@@ -40,7 +41,7 @@ const Index = () => {
 
   const preparednessItems = [
     {
-      icon: FirstAid,
+      icon: Ambulance,
       title: "First Aid Kits",
       description: "Comprehensive medical supplies",
       price: "$49.99"
