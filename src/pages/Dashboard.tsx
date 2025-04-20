@@ -67,6 +67,16 @@ const Dashboard = () => {
               <CardDescription>Get intelligent disaster guidance</CardDescription>
             </CardHeader>
           </Card>
+
+          <Card className="bg-helper-darkgray border-helper-darkgray hover:border-helper-red transition-colors cursor-pointer" onClick={() => navigate('/disaster-kit-stores')}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-helper-red" />
+                Disaster Kit Stores
+              </CardTitle>
+              <CardDescription>Find nearby disaster kit stores</CardDescription>
+            </CardHeader>
+          </Card>
           
           <Card className="bg-helper-red text-white border-helper-red hover:bg-red-700 transition-colors cursor-pointer" onClick={() => navigate('/alerts')}>
             <CardContent className="flex items-center justify-center p-6">

@@ -16,6 +16,7 @@ import AI from "./pages/AI";
 import Weather from "./pages/Weather";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import DisasterKitStores from "./pages/DisasterKitStores";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +106,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Weather />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/disaster-kit-stores" 
+                element={
+                  <ProtectedRoute>
+                    <DisasterKitStores />
                   </ProtectedRoute>
                 } 
               />

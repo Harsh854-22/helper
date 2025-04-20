@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AlertCircle,
   LifeBuoy,
-  MapPin,
+  ShoppingCart,
   Phone,
   User,
   BrainCircuit,
@@ -12,6 +12,7 @@ import {
   Home,
   Menu,
   X,
+  MapPin,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -44,6 +45,7 @@ export function AppSidebar() {
     { title: 'Profile', icon: User, path: '/profile' },
     { title: 'AI Assistant', icon: BrainCircuit, path: '/ai' },
     { title: 'Weather', icon: Cloud, path: '/weather' },
+    { title: 'Disaster Kit Stores', icon: ShoppingCart, path: '/disaster-kit-stores' },
   ];
 
   return (
