@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LifeBuoy, ShieldAlert, MapPin, Cloud, Package2 } from 'lucide-react';
+import { LifeBuoy, ShieldAlert, MapPin, Cloud, Package2, Truck, FirstAid, Flashlight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const Index = () => {
 
   const handleGetStarted = () => {
     localStorage.setItem('helper-visited', 'true');
-    navigate('/dashboard');
+    navigate('/login');
   };
 
   const features = [
@@ -34,11 +35,27 @@ const Index = () => {
       icon: Cloud,
       title: "Weather Monitoring",
       description: "Live weather updates and forecasts"
+    }
+  ];
+
+  const preparednessItems = [
+    {
+      icon: FirstAid,
+      title: "First Aid Kits",
+      description: "Comprehensive medical supplies",
+      price: "$49.99"
     },
     {
-      icon: Package2,
-      title: "Emergency Supplies",
-      description: "Access our marketplace for disaster preparedness kits"
+      icon: Flashlight,
+      title: "Emergency Lighting",
+      description: "Solar-powered and battery backup options",
+      price: "$29.99"
+    },
+    {
+      icon: Truck,
+      title: "Survival Backpack",
+      description: "72-hour emergency preparedness kit",
+      price: "$129.99"
     }
   ];
 
@@ -68,20 +85,60 @@ const Index = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-gray-800 hover:border-helper-red transition-all duration-300"
-            >
-              <feature.icon className="w-12 h-12 text-helper-red mb-4" />
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-400">{feature.description}</p>
-            </div>
-          ))}
-        </div>
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-8 text-white">Key Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card 
+                key={index} 
+                className="bg-black/20 backdrop-blur-sm border-gray-800 hover:border-helper-red transition-all duration-300"
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <feature.icon className="w-10 h-10 text-helper-red" />
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-400">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
 
-        <div className="text-center">
+        <section>
+          <h2 className="text-3xl font-bold text-center mb-8 text-white">Emergency Preparedness Store</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {preparednessItems.map((item, index) => (
+              <Card 
+                key={index} 
+                className="bg-black/20 backdrop-blur-sm border-gray-800 hover:border-helper-red transition-all duration-300"
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <item.icon className="w-10 h-10 text-helper-red" />
+                      <CardTitle className="text-xl">{item.title}</CardTitle>
+                    </div>
+                    <span className="text-xl font-bold text-helper-red">{item.price}</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-400">{item.description}</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-4 border-helper-red text-helper-red hover:bg-helper-red/10"
+                  >
+                    Add to Cart
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <div className="text-center mt-16">
           <p className="text-sm text-gray-500 max-w-2xl mx-auto">
             By using Helper, you're taking an important step towards better emergency preparedness.
             Our AI-powered platform ensures you're always ready for the unexpected.

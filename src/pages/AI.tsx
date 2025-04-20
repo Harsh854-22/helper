@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,7 +24,7 @@ const AI = () => {
         const pipe = await pipeline(
           'text-generation',
           'gpt2',
-          { quantized: true }
+          {} // Remove the quantized option
         );
         setGenerator(pipe);
         setIsModelLoading(false);
