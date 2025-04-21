@@ -61,7 +61,7 @@ const Alerts = () => {
     instructions: z.string().min(10, {
       message: "Instructions must be at least 10 characters.",
     }),
-  })
+  });
   
   const form = useForm<z.infer<typeof alertSchema>>({
     resolver: zodResolver(alertSchema),
@@ -73,7 +73,18 @@ const Alerts = () => {
       severity: "low",
       instructions: "",
     },
-  })
+  });
+
+  // Get user's location and set it in the form if empty
+  useEffect(() => {
+    if (!navigator.geolocation) return; // If geolocation is not supported
+    if (!form.getValues('location')) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const location = `${position.coords.latitude}, ${position.coords.longitude}`;
+        form.setValue('location', location);
+      });
+    }
+  }, [form]);
 
   const handleCreateAlert = (data: any) => {
     const newAlert: AlertType = {
@@ -84,7 +95,7 @@ const Alerts = () => {
       location: data.location,
       time: new Date().toISOString(),
       severity: data.severity as "critical" | "high" | "medium" | "low",
-      instructions: data.instructions.split('\n').filter(Boolean)
+      instructions: data.instructions.split('\n').filter(Boolean),
     };
     setAlerts(prev => [...prev, newAlert]);
     toast({
@@ -106,7 +117,7 @@ const Alerts = () => {
       location: data.location,
       time: new Date().toISOString(),
       severity: data.severity as "critical" | "high" | "medium" | "low",
-      instructions: data.instructions.split('\n').filter(Boolean)
+      instructions: data.instructions.split('\n').filter(Boolean),
     };
     
     setAlerts(prev => prev.map(alert => alert.id === editAlert.id ? updatedAlert : alert));
@@ -140,7 +151,7 @@ const Alerts = () => {
 
   return (
     <Layout title="Alerts">
-      <div className="container mx-auto p-4 md:p-6">
+      <div className="container mx-auto p-4 md:p-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 100px)" }}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Alerts</h2>
           <Dialog open={open} onOpenChange={setOpen}>

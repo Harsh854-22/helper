@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -276,247 +275,185 @@ const Resources = () => {
             <TabsTrigger value="supplies">Supplies</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab} className="space-y-4">
-            {filteredResources.length > 0 ? (
-              filteredResources.map((resource) => (
-                <Card 
-                  key={resource.id} 
-                  className="bg-helper-darkgray border-helper-darkgray hover:border-helper-red transition-colors cursor-pointer"
-                  onClick={() => setSelectedResource(resource)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium">{resource.name}</h3>
-                          <div className={`h-2 w-2 rounded-full ${getStatusColor(resource.status)}`} />
-                        </div>
-                        
-                        <p className="text-sm text-gray-400 flex items-center gap-1 mb-1">
-                          <MapPin size={12} /> {resource.address} ({resource.distance})
-                        </p>
-                        
-                        <p className="text-sm text-gray-400 flex items-center gap-1">
-                          <Clock size={12} /> {resource.hours}
-                        </p>
-                      </div>
-                      
-                      <Badge variant="outline" className="text-xs">
-                        {getTypeLabel(resource.type)}
+          <TabsContent value="all">
+            <div className="space-y-4">
+              {filteredResources.map((resource) => (
+                <Card key={resource.id}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <span>{resource.name}</span>
+                      <Badge className={`ml-2 ${getStatusColor(resource.status)}`}>
+                        {resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
                       </Badge>
+                    </CardTitle>
+                    <p className="text-sm text-gray-400">{getTypeLabel(resource.type)}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <MapPin size={16} />
+                      <span className="ml-1">{resource.address}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500 mt-2">
+                      <Phone size={16} />
+                      <span className="ml-1">{resource.phone}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500 mt-2">
+                      <Clock size={16} />
+                      <span className="ml-1">{resource.hours}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500 mt-2">
+                      <Info size={16} />
+                      <span className="ml-1">{resource.notes}</span>
                     </div>
                   </CardContent>
+                  <div className="flex justify-between items-center p-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setSelectedResource(resource)}
+                    >
+                      <Edit size={16} /> Edit
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={() => handleDeleteResource(resource.id)}
+                    >
+                      <Trash2 size={16} /> Delete
+                    </Button>
+                  </div>
                 </Card>
-              ))
-            ) : (
-              <Card className="bg-helper-darkgray border-helper-darkgray">
-                <CardContent className="p-6 text-center">
-                  <MapPin className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-                  <h3 className="text-lg font-medium">No resources found</h3>
-                  <p className="text-gray-400">Try adjusting your search or filter</p>
-                </CardContent>
-              </Card>
-            )}
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
-        
-        {/* Resource Detail Dialog */}
-        {selectedResource && (
-          <Dialog open={!!selectedResource} onOpenChange={(open) => !open && setSelectedResource(null)}>
-            <DialogContent className="bg-helper-darkgray border-helper-darkgray w-full max-w-md">
-              <DialogHeader>
-                <div className="flex justify-between items-start">
-                  <DialogTitle className="flex items-center gap-2">
-                    {selectedResource.name}
-                    <div className={`h-2 w-2 rounded-full ${getStatusColor(selectedResource.status)}`} />
-                  </DialogTitle>
-                </div>
-                <Badge variant="outline" className="mt-2">
-                  {getTypeLabel(selectedResource.type)}
-                </Badge>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-helper-red mt-1 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm">{selectedResource.address}</p>
-                      <p className="text-xs text-gray-400">{selectedResource.distance} away</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-helper-red flex-shrink-0" />
-                    <p className="text-sm">{selectedResource.phone}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-helper-red flex-shrink-0" />
-                    <p className="text-sm">{selectedResource.hours}</p>
-                  </div>
-                </div>
-                
-                {selectedResource.notes && (
-                  <div className="bg-black/20 p-3 rounded-md">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-helper-red mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">{selectedResource.notes}</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-between pt-2">
-                  <Button 
-                    variant="outline"
-                    className="flex items-center gap-1"
-                    onClick={() => handleDeleteResource(selectedResource.id)}
-                  >
-                    <Trash2 size={16} />
-                    Delete
-                  </Button>
-                  
-                  <Button 
-                    className="bg-helper-red hover:bg-red-700 text-white"
-                    onClick={() => {
-                      // In a real app, this would initiate a call
-                      window.location.href = `tel:${selectedResource.phone.replace(/\D/g, '')}`;
-                    }}
-                  >
-                    Call
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        
-        {/* Add Resource Dialog */}
-        <Dialog open={isAddingResource} onOpenChange={setIsAddingResource}>
-          <DialogContent className="bg-helper-darkgray border-helper-darkgray max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Resource</DialogTitle>
-              <DialogDescription>Add a new emergency resource to help people in need.</DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="resource-type">Resource Type</Label>
-                <Select 
-                  value={newResource.type} 
-                  onValueChange={value => setNewResource({...newResource, type: value as 'shelter' | 'hospital' | 'food' | 'supplies'})}
-                >
-                  <SelectTrigger className="bg-helper-black border-helper-darkgray">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="shelter">Shelter</SelectItem>
-                    <SelectItem value="hospital">Medical</SelectItem>
-                    <SelectItem value="food">Food</SelectItem>
-                    <SelectItem value="supplies">Supplies</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-name">Name</Label>
-                <Input 
-                  id="resource-name" 
-                  className="bg-helper-black border-helper-darkgray"
-                  value={newResource.name}
-                  onChange={e => setNewResource({...newResource, name: e.target.value})}
-                  placeholder="Resource name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-address">Address</Label>
-                <Input 
-                  id="resource-address" 
-                  className="bg-helper-black border-helper-darkgray"
-                  value={newResource.address}
-                  onChange={e => setNewResource({...newResource, address: e.target.value})}
-                  placeholder="Full address"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-phone">Phone Number</Label>
-                <Input 
-                  id="resource-phone" 
-                  className="bg-helper-black border-helper-darkgray"
-                  value={newResource.phone}
-                  onChange={e => setNewResource({...newResource, phone: e.target.value})}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-distance">Distance</Label>
-                <Input 
-                  id="resource-distance" 
-                  className="bg-helper-black border-helper-darkgray"
-                  value={newResource.distance}
-                  onChange={e => setNewResource({...newResource, distance: e.target.value})}
-                  placeholder="e.g. 1.2 miles"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-hours">Operating Hours</Label>
-                <Input 
-                  id="resource-hours" 
-                  className="bg-helper-black border-helper-darkgray"
-                  value={newResource.hours}
-                  onChange={e => setNewResource({...newResource, hours: e.target.value})}
-                  placeholder="e.g. Open 24/7 or 9AM - 5PM"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-status">Status</Label>
-                <Select 
-                  value={newResource.status} 
-                  onValueChange={value => setNewResource({...newResource, status: value as 'open' | 'closed' | 'limited'})}
-                >
-                  <SelectTrigger className="bg-helper-black border-helper-darkgray">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="limited">Limited</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource-notes">Additional Notes</Label>
-                <Textarea 
-                  id="resource-notes" 
-                  className="bg-helper-black border-helper-darkgray"
-                  value={newResource.notes}
-                  onChange={e => setNewResource({...newResource, notes: e.target.value})}
-                  placeholder="Any additional information about this resource"
-                  rows={3}
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddingResource(false)}>Cancel</Button>
-              <Button 
-                className="bg-helper-red hover:bg-red-700 text-white"
-                onClick={handleAddResource}
-              >
-                Add Resource
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {/* Add Resource Dialog */}
+      <Dialog open={isAddingResource} onOpenChange={() => setIsAddingResource(false)}>
+        <DialogContent className="bg-helper-darkgray border-helper-darkgray max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Resource</DialogTitle>
+            <DialogDescription>Add a new emergency resource to help people in need.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="resource-type">Resource Type</Label>
+              <Select 
+                value={newResource.type} 
+                onValueChange={value => setNewResource({...newResource, type: value as 'shelter' | 'hospital' | 'food' | 'supplies'})}
+              >
+                <SelectTrigger className="bg-helper-black border-helper-darkgray">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="shelter">Shelter</SelectItem>
+                  <SelectItem value="hospital">Medical</SelectItem>
+                  <SelectItem value="food">Food</SelectItem>
+                  <SelectItem value="supplies">Supplies</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-name">Name</Label>
+              <Input 
+                id="resource-name" 
+                className="bg-helper-black border-helper-darkgray"
+                value={newResource.name}
+                onChange={e => setNewResource({...newResource, name: e.target.value})}
+                placeholder="Resource name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-address">Address</Label>
+              <Input 
+                id="resource-address" 
+                className="bg-helper-black border-helper-darkgray"
+                value={newResource.address}
+                onChange={e => setNewResource({...newResource, address: e.target.value})}
+                placeholder="Full address"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-phone">Phone Number</Label>
+              <Input 
+                id="resource-phone" 
+                className="bg-helper-black border-helper-darkgray"
+                value={newResource.phone}
+                onChange={e => setNewResource({...newResource, phone: e.target.value})}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-distance">Distance</Label>
+              <Input 
+                id="resource-distance" 
+                className="bg-helper-black border-helper-darkgray"
+                value={newResource.distance}
+                onChange={e => setNewResource({...newResource, distance: e.target.value})}
+                placeholder="e.g. 1.2 miles"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-hours">Operating Hours</Label>
+              <Input 
+                id="resource-hours" 
+                className="bg-helper-black border-helper-darkgray"
+                value={newResource.hours}
+                onChange={e => setNewResource({...newResource, hours: e.target.value})}
+                placeholder="e.g. Open 24/7 or 9AM - 5PM"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-status">Status</Label>
+              <Select 
+                value={newResource.status} 
+                onValueChange={value => setNewResource({...newResource, status: value as 'open' | 'closed' | 'limited'})}
+              >
+                <SelectTrigger className="bg-helper-black border-helper-darkgray">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="limited">Limited</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resource-notes">Additional Notes</Label>
+              <Textarea 
+                id="resource-notes" 
+                className="bg-helper-black border-helper-darkgray"
+                value={newResource.notes}
+                onChange={e => setNewResource({...newResource, notes: e.target.value})}
+                placeholder="Any additional information about this resource"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddingResource(false)}>Cancel</Button>
+            <Button 
+              className="bg-helper-red hover:bg-red-700 text-white"
+              onClick={handleAddResource}
+            >
+              Add Resource
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
-};
+}
 
 export default Resources;
