@@ -77,7 +77,7 @@ export function AuthForm() {
   };
 
   return (
-    <Card className="w-full max-w-md bg-helper-darkgray border-helper-darkgray">
+    <Card className="w-full max-w-md bg-helper-darkgray border-helper-darkgray ">
       <CardHeader>
         <CardTitle className="text-2xl">
           {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
