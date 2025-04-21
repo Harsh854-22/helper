@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { WeatherData } from '@/types';
 
 // OpenWeatherMap API key
-const OPENWEATHER_API_KEY = "ADD_YOUR_KEY_HERE"; // Replace with your API key
+const OPENWEATHER_API_KEY = "3bda9fb4f7d808a621c9495a097d8379"; // Replace with your API key
 
 const Weather = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -31,7 +30,7 @@ const Weather = () => {
   const [location, setLocation] = useState<{lat: number, lon: number} | null>(null);
   const { toast } = useToast();
 
-  // Get user's location
+  // Get user's location with fallback to Delhi, India
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -46,19 +45,19 @@ const Weather = () => {
           toast({
             variant: "destructive",
             title: "Location error",
-            description: "Could not get your location. Using default location."
+            description: "Could not get your location. Using default location (Delhi, India)."
           });
-          // Use a default location
-          setLocation({ lat: 40.7128, lon: -74.0060 }); // New York City
+          // Default to Delhi, India
+          setLocation({ lat: 28.6139, lon: 77.2090 });
         }
       );
     } else {
       toast({
         variant: "destructive",
         title: "Geolocation not supported",
-        description: "Your browser doesn't support geolocation. Using default location."
+        description: "Your browser doesn't support geolocation. Using default location (Delhi, India)."
       });
-      setLocation({ lat: 40.7128, lon: -74.0060 }); // New York City
+      setLocation({ lat: 28.6139, lon: 77.2090 });
     }
   }, [toast]);
 
@@ -69,11 +68,27 @@ const Weather = () => {
     const fetchWeather = async () => {
       try {
         setIsLoading(true);
+        let locationName = "Current Location";
         
         // If using a real API key
-        if (OPENWEATHER_API_KEY !== "ADD_YOUR_KEY_HERE") {
+        if (OPENWEATHER_API_KEY !== "3bda9fb4f7d808a621c9495a097d8379") {
+          // First get location name
+          try {
+            const geoResponse = await fetch(
+              `https://api.openweathermap.org/geo/1.0/reverse?lat=${location.lat}&lon=${location.lon}&limit=1&appid=${OPENWEATHER_API_KEY}`
+            );
+            if (geoResponse.ok) {
+              const geoData = await geoResponse.json();
+              if (geoData.length > 0) {
+                locationName = `${geoData[0].name}, ${geoData[0].country}`;
+              }
+            }
+          } catch (geoError) {
+            console.error("Error fetching location name:", geoError);
+          }
+
           const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`
+            `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${OPENWEATHER_API_KEY}`
           );
           
           if (!response.ok) {
@@ -84,10 +99,10 @@ const Weather = () => {
           
           // Transform API data to our format
           const transformedData: WeatherData = {
-            location: "Current Location",
+            location: locationName,
             temperature: Math.round(data.current.temp),
             humidity: data.current.humidity,
-            windSpeed: Math.round(data.current.wind_speed),
+            windSpeed: Math.round(data.current.wind_speed * 3.6), // Convert m/s to km/h
             windDirection: getWindDirection(data.current.wind_deg),
             description: data.current.weather[0].description,
             condition: mapWeatherCondition(data.current.weather[0].main),
@@ -106,7 +121,7 @@ const Weather = () => {
           
           setWeatherData(transformedData);
         } else {
-          // Use sample data if no API key is provided
+          // Use Indian sample data if no API key is provided
           const sampleData = getSampleWeatherData();
           setTimeout(() => {
             setWeatherData(sampleData);
@@ -135,9 +150,9 @@ const Weather = () => {
       // Refetch weather data
       const fetchData = async () => {
         try {
-          if (OPENWEATHER_API_KEY !== "ADD_YOUR_KEY_HERE") {
+          if (OPENWEATHER_API_KEY !== "3bda9fb4f7d808a621c9495a097d8379") {
             const response = await fetch(
-              `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`
+              `https://api.openweathermap.org/data/2.5/onecall?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${OPENWEATHER_API_KEY}`
             );
             
             if (!response.ok) {
@@ -146,12 +161,12 @@ const Weather = () => {
             
             const data = await response.json();
             
-            // Transform API data to our format (same logic as above)
+            // Transform API data to our format
             const transformedData: WeatherData = {
               location: "Current Location",
               temperature: Math.round(data.current.temp),
               humidity: data.current.humidity,
-              windSpeed: Math.round(data.current.wind_speed),
+              windSpeed: Math.round(data.current.wind_speed * 3.6), // Convert m/s to km/h
               windDirection: getWindDirection(data.current.wind_deg),
               description: data.current.weather[0].description,
               condition: mapWeatherCondition(data.current.weather[0].main),
@@ -200,32 +215,33 @@ const Weather = () => {
     }
   };
 
+  // Indian weather sample data
   const getSampleWeatherData = (): WeatherData => ({
-    location: "Current Location",
-    temperature: 68,
-    humidity: 75,
-    windSpeed: 12,
-    windDirection: "NE",
+    location: "Delhi, India",
+    temperature: 32,
+    humidity: 65,
+    windSpeed: 15,
+    windDirection: "NW",
     description: "Partly Cloudy",
     condition: "cloudy",
     forecast: [
-      { day: "Today", temperature: 68, condition: "cloudy" },
-      { day: "Tomorrow", temperature: 72, condition: "clear" },
-      { day: "Wed", temperature: 65, condition: "rain" },
-      { day: "Thu", temperature: 63, condition: "rain" },
-      { day: "Fri", temperature: 70, condition: "cloudy" }
+      { day: "Today", temperature: 32, condition: "cloudy" },
+      { day: "Tomorrow", temperature: 34, condition: "clear" },
+      { day: "Wed", temperature: 36, condition: "clear" },
+      { day: "Thu", temperature: 33, condition: "rain" },
+      { day: "Fri", temperature: 31, condition: "rain" }
     ],
     alerts: [
       {
-        type: "Flood Watch",
-        description: "Potential flooding in low-lying areas due to recent rainfall.",
+        type: "Heat Wave Advisory",
+        description: "High temperatures expected. Stay hydrated and avoid direct sunlight during peak hours.",
         severity: "medium"
       }
     ],
     lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   });
 
-  // Helper functions
+  // Helper functions (unchanged from original)
   const getWindDirection = (degrees: number) => {
     const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     const index = Math.round(degrees / 45) % 8;
@@ -255,8 +271,8 @@ const Weather = () => {
   };
 
   const getSeverityFromEvent = (event: string): 'low' | 'medium' | 'high' => {
-    const highSeverityEvents = ['Hurricane', 'Tornado', 'Tsunami', 'Flash Flood', 'Severe Thunderstorm'];
-    const mediumSeverityEvents = ['Flood', 'Winter Storm', 'Heat Advisory', 'Wind Advisory', 'Dense Fog'];
+    const highSeverityEvents = ['Cyclone', 'Tornado', 'Flood', 'Severe Thunderstorm'];
+    const mediumSeverityEvents = ['Heat Wave', 'Dust Storm', 'Heavy Rain', 'Fog'];
     
     const eventLower = event.toLowerCase();
     
@@ -349,7 +365,7 @@ const Weather = () => {
                       {renderWeatherIcon(weatherData.condition, 64)}
                       
                       <div className="text-center md:text-left">
-                        <h3 className="text-4xl font-bold">{weatherData.temperature}°F</h3>
+                        <h3 className="text-4xl font-bold">{weatherData.temperature}°C</h3>
                         <p className="text-lg text-gray-300">{weatherData.description}</p>
                       </div>
                     </div>
@@ -359,7 +375,7 @@ const Weather = () => {
                         <Thermometer className="h-5 w-5 text-helper-red" />
                         <div>
                           <p className="text-sm text-gray-400">Feels Like</p>
-                          <p className="text-lg">{weatherData.temperature}°F</p>
+                          <p className="text-lg">{weatherData.temperature}°C</p>
                         </div>
                       </div>
                       
@@ -375,7 +391,7 @@ const Weather = () => {
                         <Wind className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-400">Wind</p>
-                          <p className="text-lg">{weatherData.windSpeed} mph</p>
+                          <p className="text-lg">{weatherData.windSpeed} km/h</p>
                         </div>
                       </div>
                       
@@ -405,7 +421,7 @@ const Weather = () => {
                         
                         <div className="flex items-center gap-3">
                           {renderWeatherIcon(day.condition, 20)}
-                          <p className="text-lg">{day.temperature}°F</p>
+                          <p className="text-lg">{day.temperature}°C</p>
                         </div>
                       </div>
                     ))}
