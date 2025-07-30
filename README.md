@@ -39,13 +39,12 @@ Helper aims to:
 
 ## ✅ Proof
 ![Dashboard Screenshot](https://github.com/user-attachments/assets/61f415f7-c4d5-45ab-b1b1-69659edb98d8)
-
 *Active alerts and emergency resources at a glance*
 
-![AI Assistant](screenshots/ai-assistant.png)
+![1 (7)](https://github.com/user-attachments/assets/4a2b15bd-6fb4-434d-b07a-403b39406a3f)
 *AI-powered disaster guidance in action*
 
-![Resource Management](screenshots/resources.png)
+![1 (2)](https://github.com/user-attachments/assets/57af9565-cfb3-4e90-b50e-b4e345c9906f)
 *Comprehensive emergency resource directory*
 
 ## 💻 How to Install Locally
