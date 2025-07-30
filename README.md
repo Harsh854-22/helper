@@ -38,8 +38,8 @@ Helper aims to:
 - Empower volunteers to make a difference
 
 ## ✅ Proof
+![Dashboard Screenshot](https://github.com/user-attachments/assets/61f415f7-c4d5-45ab-b1b1-69659edb98d8)
 
-![Dashboard Screenshot](screenshots/dashboard.png)
 *Active alerts and emergency resources at a glance*
 
 ![AI Assistant](screenshots/ai-assistant.png)
@@ -67,11 +67,11 @@ Helper aims to:
    ```bash
    # Install server dependencies
    cd server
-   yarn install
+   yarn/npm install
 
    # Install client dependencies
    cd ../client
-   yarn install
+   yarn/npm install
    ```
 
 3. **Set up environment variables**
@@ -92,11 +92,11 @@ Helper aims to:
 
    # Start server
    cd server
-   yarn start
+   yarn/npm start
 
    # In another terminal, start client
    cd ../client
-   yarn start
+   yarn/npm start
    ```
 
 5. **Access the application**
@@ -104,7 +104,7 @@ Helper aims to:
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions!
 
 ## 📄 License
 
